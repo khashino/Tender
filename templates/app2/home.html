@@ -1,0 +1,26 @@
+{% extends 'app2/base.html' %}
+
+{% block title %}Home - App2{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-center">Welcome to App2</h2>
+            </div>
+            <div class="card-body">
+                {% if user.is_authenticated and user.app2user %}
+                    <p class="text-center">Hello, {{ user.username }}! You are logged in.</p>
+                {% else %}
+                    <p class="text-center">Please login or register to access the features.</p>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'app2:login' %}" class="btn btn-primary me-2">Login</a>
+                        <a href="{% url 'app2:register' %}" class="btn btn-success">Register</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
