@@ -3,6 +3,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from viewflow.contrib.auth import AuthViewset
+from viewflow.urls import Application, Site, ModelViewset
+from viewflow.workflow.flow import FlowAppViewset
+
+from app1.flows import TenderApplicationFlow
+
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('app1/', include('app1.urls')),
