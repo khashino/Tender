@@ -1,35 +1,115 @@
 {% extends 'app2/base.html' %}
 
-{% block title %}Register - App2{% endblock %}
+{% block title %}ثبت‌نام در پنل مدیریت مناقصات{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="text-center">Register</h2>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-person-plus display-4 text-primary mb-3"></i>
+                        <h2 class="card-title">ثبت‌نام در پنل مدیریت مناقصات</h2>
+                        <p class="text-muted">لطفاً اطلاعات خود را برای ثبت‌نام وارد کنید</p>
                     </div>
-                    <div class="mb-3">
-                        <label for="password1" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password1" name="password1" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password2" class="form-label">Confirm Password</label>
-                        <input type="password" class="form-control" id="password2" name="password2" required>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success">Register</button>
-                    </div>
-                </form>
-                <div class="text-center mt-3">
-                    <p>Already have an account? <a href="{% url 'app2:login' %}">Login here</a></p>
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                لطفاً خطاهای زیر را اصلاح کنید:
+                                <ul class="mb-0 mt-2">
+                                    {% for field, errors in form.errors.items %}
+                                        {% for error in errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="id_username" class="form-label">نام کاربری</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-person"></i>
+                                    </span>
+                                    <input type="text" name="username" id="id_username" class="form-control" required>
+                                </div>
+                                <div class="form-text">نام کاربری باید بین ۳ تا ۱۵۰ کاراکتر باشد</div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="id_email" class="form-label">ایمیل</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-envelope"></i>
+                                    </span>
+                                    <input type="email" name="email" id="id_email" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="id_password1" class="form-label">رمز عبور</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-lock"></i>
+                                    </span>
+                                    <input type="password" name="password1" id="id_password1" class="form-control" required>
+                                </div>
+                                <div class="form-text">رمز عبور باید حداقل ۸ کاراکتر باشد</div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="id_password2" class="form-label">تکرار رمز عبور</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-lock"></i>
+                                    </span>
+                                    <input type="password" name="password2" id="id_password2" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="id_company_name" class="form-label">نام شرکت</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-building"></i>
+                                    </span>
+                                    <input type="text" name="company_name" id="id_company_name" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="id_phone" class="form-label">شماره تماس</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-telephone"></i>
+                                    </span>
+                                    <input type="tel" name="phone" id="id_phone" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="id_address" class="form-label">آدرس</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-geo-alt"></i>
+                                </span>
+                                <textarea name="address" id="id_address" class="form-control" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-person-plus me-2"></i>
+                                ثبت‌نام
+                            </button>
+                            <a href="{% url 'app2:login' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                قبلاً ثبت‌نام کرده‌اید؟ ورود به پنل
+                            </a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

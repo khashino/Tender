@@ -1,31 +1,51 @@
 {% extends 'app2/base.html' %}
 
-{% block title %}Login - App2{% endblock %}
+{% block title %}ورود به پنل مدیریت مناقصات{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="text-center">Login</h2>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-building-gear display-4 text-primary mb-3"></i>
+                        <h2 class="card-title">ورود به پنل مدیریت مناقصات</h2>
+                        <p class="text-muted">لطفاً اطلاعات ورود خود را وارد کنید</p>
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Login</button>
-                    </div>
-                </form>
-                <div class="text-center mt-3">
-                    <p>Don't have an account? <a href="{% url 'app2:register' %}">Register here</a></p>
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                نام کاربری یا رمز عبور اشتباه است.
+                            </div>
+                        {% endif %}
+                        <div class="mb-4">
+                            <label for="id_username" class="form-label">نام کاربری</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-person"></i>
+                                </span>
+                                <input type="text" name="username" id="id_username" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="id_password" class="form-label">رمز عبور</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-lock"></i>
+                                </span>
+                                <input type="password" name="password" id="id_password" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                ورود به پنل
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

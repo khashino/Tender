@@ -1,70 +1,226 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}App2{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>{% block title %}پنل مدیریت مناقصات{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vazirmatn@33.003/font-face.css" rel="stylesheet">
     <style>
-        .navbar {
-            background-color: #2c3e50 !important;
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --danger-color: #e74c3c;
+        }
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-5px);
+        }
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .sidebar .nav-link i {
+            margin-left: 10px;
+            font-size: 1.1rem;
+        }
+        .main-content {
+            padding: 20px;
         }
         .card {
             border: none;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            background: white;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            background: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 1.2rem;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+        }
+        .btn {
+            border-radius: 5px;
+            padding: 8px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
         }
         .btn-primary {
-            background-color: #3498db;
-            border-color: #3498db;
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
         }
-        .btn-success {
-            background-color: #2ecc71;
-            border-color: #2ecc71;
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        .table th {
+            font-weight: 600;
+            color: var(--primary-color);
+            border-top: none;
+        }
+        .table td {
+            vertical-align: middle;
+        }
+        .welcome-card {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+        }
+        .welcome-card h2 {
+            font-weight: 700;
+        }
+        .stat-card {
+            border-left: 4px solid var(--accent-color);
+        }
+        .stat-card i {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+        .input-group-text {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        .form-control:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
         }
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'app2:home' %}">App2</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    {% if user.is_authenticated %}
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">پنل مناقصات</h4>
+                    </div>
+                    <ul class="nav flex-column">
                         <li class="nav-item">
-                            <span class="nav-link">Welcome, {{ user.username }}</span>
+                            <a class="nav-link active" href="{% url 'app2:home' %}">
+                                <i class="bi bi-house-door"></i>
+                                داشبورد
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'app2:logout' %}">Logout</a>
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-search"></i>
+                                جستجوی مناقصات
+                            </a>
                         </li>
-                    {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'app2:login' %}">Login</a>
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-file-earmark-text"></i>
+                                پیشنهادات من
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'app2:register' %}">Register</a>
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-check-circle"></i>
+                                مناقصات برنده شده
+                            </a>
                         </li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container mt-4">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-gear"></i>
+                                تنظیمات
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-            {% endfor %}
-        {% endif %}
-        
-        {% block content %}
-        {% endblock %}
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <nav class="navbar navbar-expand-lg navbar-light mb-4">
+                    <div class="container-fluid">
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="d-flex align-items-center">
+                            {% if user.is_authenticated %}
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-circle fs-4 me-2 text-primary"></i>
+                                    <span class="me-3">خوش آمدید، {{ user.username }}</span>
+                                    <a href="{% url 'app2:logout' %}" class="btn btn-outline-danger">
+                                        <i class="bi bi-box-arrow-right"></i>
+                                        خروج
+                                    </a>
+                                </div>
+                            {% else %}
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'app2:register' %}" class="btn btn-outline-primary">
+                                        <i class="bi bi-person-plus"></i>
+                                        ثبت‌نام
+                                    </a>
+                                    <a href="{% url 'app2:login' %}" class="btn btn-primary">
+                                        <i class="bi bi-box-arrow-in-right"></i>
+                                        ورود به پنل
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </nav>
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html> 
