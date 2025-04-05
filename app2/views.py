@@ -10,11 +10,20 @@ import os
 from .models import App2User, Company, CompanyDocument
 from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm
 from .auth_backend import App2AuthBackend
+from shared_models.models import Tender
+from django.utils import timezone
 
 def home(request):
-    if request.user.is_authenticated and not isinstance(request.user, App2User):
-        logout(request)
-    return render(request, 'app2/home.html')
+    if not request.user.is_authenticated:
+        return redirect('app2:login')
+    
+    # Get the latest 5 tenders
+    latest_tenders = Tender.objects.all().order_by('-published_date')[:5]
+    
+    context = {
+        'latest_tenders': latest_tenders,
+    }
+    return render(request, 'app2/home.html', context)
 
 def login_view(request):
     if request.user.is_authenticated and isinstance(request.user, App2User):
@@ -124,4 +133,40 @@ def download_document(request, document_id):
     except Exception as e:
         messages.error(request, f'خطا در دانلود فایل: {str(e)}')
     
-    return redirect('app2:settings') 
+    return redirect('app2:settings')
+
+@login_required
+def tender_list(request):
+    tenders = Tender.objects.all()
+    return render(request, 'app2/tender_list.html', {'tenders': tenders})
+
+@login_required
+def tender_create(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        reference_number = request.POST.get('reference_number')
+        closing_date = request.POST.get('closing_date')
+        estimated_value = request.POST.get('estimated_value')
+        currency = request.POST.get('currency', 'USD')
+        
+        try:
+            tender = Tender.objects.create(
+                title=title,
+                description=description,
+                reference_number=reference_number,
+                closing_date=closing_date,
+                estimated_value=estimated_value,
+                currency=currency
+            )
+            messages.success(request, 'Tender created successfully!')
+            return redirect('tender_detail', tender_id=tender.id)
+        except Exception as e:
+            messages.error(request, f'Error creating tender: {str(e)}')
+    
+    return render(request, 'app2/tender_create.html')
+
+@login_required
+def tender_detail(request, tender_id):
+    tender = get_object_or_404(Tender, id=tender_id)
+    return render(request, 'app2/tender_detail.html', {'tender': tender}) 

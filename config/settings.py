@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'app1',
     'app2',
+    'shared_models',
     'viewflow',
     'viewflow.workflow',
 ]
