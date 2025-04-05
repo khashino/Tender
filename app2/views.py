@@ -1,9 +1,14 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import App2User
-from .forms import App2UserCreationForm, App2AuthenticationForm
+from django.core.files.storage import FileSystemStorage
+from django.http import HttpResponse, FileResponse
+from django.conf import settings
+import os
+from .models import App2User, Company, CompanyDocument
+from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm
 from .auth_backend import App2AuthBackend
 
 def home(request):
@@ -43,7 +48,7 @@ def register(request):
             user = form.save()
             login(request, user, backend='app2.auth_backend.App2AuthBackend')
             messages.success(request, 'Registration successful!')
-            return redirect('app2:home')
+            return redirect('app2:settings')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -53,4 +58,70 @@ def register(request):
 def logout_view(request):
     logout(request)
     messages.info(request, 'You have been logged out.')
-    return redirect('app2:home') 
+    return redirect('app2:home')
+
+@login_required
+def settings(request):
+    try:
+        company = request.user.company
+    except Company.DoesNotExist:
+        company = None
+
+    if request.method == 'POST':
+        form = CompanyForm(request.POST, request.FILES, instance=company)
+        if form.is_valid():
+            company = form.save(commit=False)
+            company.user = request.user
+            company.save()
+            messages.success(request, 'اطلاعات شرکت با موفقیت بروزرسانی شد.')
+            return redirect('app2:settings')
+    else:
+        form = CompanyForm(instance=company)
+
+    documents = CompanyDocument.objects.filter(company=company) if company else None
+    document_form = CompanyDocumentForm()
+
+    context = {
+        'company': company,
+        'form': form,
+        'documents': documents,
+        'document_form': document_form,
+    }
+    return render(request, 'app2/settings.html', context)
+
+@login_required
+def upload_document(request):
+    if request.method == 'POST':
+        form = CompanyDocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            document = form.save(commit=False)
+            document.company = request.user.company
+            document.save()
+            messages.success(request, 'سند با موفقیت آپلود شد.')
+        else:
+            messages.error(request, 'خطا در آپلود سند. لطفاً دوباره تلاش کنید.')
+    return redirect('app2:settings')
+
+@login_required
+def delete_document(request, document_id):
+    document = get_object_or_404(CompanyDocument, id=document_id, company=request.user.company)
+    document.delete()
+    messages.success(request, 'سند با موفقیت حذف شد.')
+    return redirect('app2:settings')
+
+@login_required
+def download_document(request, document_id):
+    document = get_object_or_404(CompanyDocument, id=document_id, company=request.user.company)
+    
+    try:
+        file_path = document.file.path
+        if os.path.exists(file_path):
+            response = FileResponse(open(file_path, 'rb'))
+            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+            return response
+        else:
+            messages.error(request, 'فایل مورد نظر یافت نشد.')
+    except Exception as e:
+        messages.error(request, f'خطا در دانلود فایل: {str(e)}')
+    
+    return redirect('app2:settings') 

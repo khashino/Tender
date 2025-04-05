@@ -7,18 +7,17 @@
     <div class="row">
         <!-- Welcome Section -->
         <div class="col-12 mb-4">
-            <div class="card welcome-card">
-                <div class="card-body p-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h2 class="card-title mb-3">به پنل مناقصات خوش آمدید</h2>
-                            <p class="card-text mb-0">
-                                در این پنل می‌توانید مناقصات فعال را مشاهده کنید، در مناقصات شرکت کنید و پیشنهادات خود را ثبت نمایید.
-                            </p>
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">سلام {{ user.username }}!</h4>
+                            <p class="text-muted mb-0">به پنل مدیریت مناقصات خوش آمدید</p>
                         </div>
-                        <div class="col-md-4 text-center">
-                            <i class="bi bi-building-gear display-4 opacity-75"></i>
-                        </div>
+                        <a href="{% url 'app2:settings' %}" class="btn btn-primary">
+                            <i class="bi bi-gear me-2"></i>
+                            تنظیمات شرکت
+                        </a>
                     </div>
                 </div>
             </div>
@@ -26,88 +25,64 @@
 
         <!-- Quick Stats -->
         <div class="col-md-3 mb-4">
-            <div class="card h-100 stat-card">
+            <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-muted mb-2">مناقصات فعال</h6>
-                            <h3 class="mb-0">۸ مورد</h3>
+                            <h6 class="text-muted mb-2">مناقصات جدید</h6>
+                            <h3 class="mb-0">5</h3>
                         </div>
                         <div class="bg-primary bg-opacity-10 p-3 rounded">
-                            <i class="bi bi-search text-primary"></i>
+                            <i class="bi bi-plus-circle text-primary"></i>
                         </div>
-                    </div>
-                    <div class="mt-3">
-                        <a href="#" class="btn btn-sm btn-primary w-100">
-                            <i class="bi bi-search me-1"></i>
-                            مشاهده مناقصات
-                        </a>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3 mb-4">
-            <div class="card h-100 stat-card">
+            <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-muted mb-2">پیشنهادات من</h6>
-                            <h3 class="mb-0">۵ مورد</h3>
+                            <h6 class="text-muted mb-2">در حال بررسی</h6>
+                            <h3 class="mb-0">12</h3>
                         </div>
                         <div class="bg-warning bg-opacity-10 p-3 rounded">
-                            <i class="bi bi-file-earmark-text text-warning"></i>
+                            <i class="bi bi-clock text-warning"></i>
                         </div>
-                    </div>
-                    <div class="mt-3">
-                        <a href="#" class="btn btn-sm btn-warning w-100">
-                            <i class="bi bi-file-earmark-text me-1"></i>
-                            مشاهده پیشنهادات
-                        </a>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3 mb-4">
-            <div class="card h-100 stat-card">
+            <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-muted mb-2">مناقصات برنده شده</h6>
-                            <h3 class="mb-0">۳ مورد</h3>
+                            <h6 class="text-muted mb-2">تایید شده</h6>
+                            <h3 class="mb-0">23</h3>
                         </div>
                         <div class="bg-success bg-opacity-10 p-3 rounded">
                             <i class="bi bi-check-circle text-success"></i>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <a href="#" class="btn btn-sm btn-success w-100">
-                            <i class="bi bi-check-circle me-1"></i>
-                            مشاهده لیست
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3 mb-4">
-            <div class="card h-100 stat-card">
+            <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-muted mb-2">در انتظار بررسی</h6>
-                            <h3 class="mb-0">۲ مورد</h3>
+                            <h6 class="text-muted mb-2">رد شده</h6>
+                            <h3 class="mb-0">3</h3>
                         </div>
-                        <div class="bg-info bg-opacity-10 p-3 rounded">
-                            <i class="bi bi-clock text-info"></i>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-x-circle text-danger"></i>
                         </div>
-                    </div>
-                    <div class="mt-3">
-                        <a href="#" class="btn btn-sm btn-info w-100">
-                            <i class="bi bi-clock me-1"></i>
-                            مشاهده لیست
-                        </a>
                     </div>
                 </div>
             </div>
@@ -116,72 +91,34 @@
         <!-- Recent Tenders -->
         <div class="col-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">آخرین مناقصات فعال</h4>
-                    <a href="#" class="btn btn-primary">
-                        <i class="bi bi-search me-1"></i>
-                        مشاهده همه مناقصات
-                    </a>
+                <div class="card-header">
+                    <h5 class="mb-0">مناقصات اخیر</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>عنوان مناقصه</th>
-                                    <th>شرکت برگزارکننده</th>
-                                    <th>مهلت شرکت</th>
+                                    <th>عنوان</th>
+                                    <th>تاریخ ایجاد</th>
+                                    <th>مهلت ارسال</th>
                                     <th>وضعیت</th>
                                     <th>عملیات</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>مناقصه خرید تجهیزات شبکه</td>
-                                    <td>شرکت ارتباطات</td>
-                                    <td>۱۴۰۲/۱۲/۳۰</td>
-                                    <td><span class="status-badge status-pending">فعال</span></td>
+                                    <td>مناقصه شماره 1</td>
+                                    <td>1402/12/15</td>
+                                    <td>1402/12/30</td>
+                                    <td><span class="badge bg-warning">در حال بررسی</span></td>
                                     <td>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-primary">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-success">
-                                                <i class="bi bi-file-earmark-text"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>مناقصه خدمات نگهداری</td>
-                                    <td>شرکت فناوری اطلاعات</td>
-                                    <td>۱۴۰۲/۱۲/۲۵</td>
-                                    <td><span class="status-badge status-pending">فعال</span></td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-primary">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-success">
-                                                <i class="bi bi-file-earmark-text"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>مناقصه طراحی وبسایت</td>
-                                    <td>شرکت توسعه نرم‌افزار</td>
-                                    <td>۱۴۰۲/۱۲/۲۰</td>
-                                    <td><span class="status-badge status-pending">فعال</span></td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-primary">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-success">
-                                                <i class="bi bi-file-earmark-text"></i>
-                                            </button>
-                                        </div>
+                                        <button class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             </tbody>

@@ -8,4 +8,8 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('register/', views.register, name='register'),
     path('logout/', views.logout_view, name='logout'),
+    path('settings/', views.settings, name='settings'),
+    path('settings/upload-document/', views.upload_document, name='upload_document'),
+    path('settings/delete-document/<int:document_id>/', views.delete_document, name='delete_document'),
+    path('download-document/<int:document_id>/', views.download_document, name='download_document'),
 ] 
