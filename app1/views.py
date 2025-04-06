@@ -15,6 +15,8 @@ from django.core.files.storage import FileSystemStorage
 import os
 from app1.models import TenderApplicationProcess
 from app1.flows import TenderApplicationFlow
+from django.db import models
+from viewflow.workflow.models import Task
 
 def home(request):
     if request.user.is_authenticated and not isinstance(request.user, App1User):
@@ -257,21 +259,49 @@ def start_application_workflow(request, application_id):
         # Check if a workflow already exists for this application
         existing_process = TenderApplicationProcess.objects.filter(
             application=application
-        ).exists()
+        ).first()
         
         if existing_process:
-            messages.warning(request, "A workflow already exists for this application.")
-            print("A workflow already exists for this application.")
+            # Get the task - either unassigned or assigned to the current user
+            task = Task.objects.filter(
+                process=existing_process,
+                status__in=['NEW', 'ASSIGNED']
+            ).filter(
+                models.Q(owner=None) | models.Q(owner=request.user)
+            ).first()
+            
+            if task:
+                # If the task is not assigned to the current user, assign it
+                if task.status == 'NEW' or task.owner != request.user:
+                    task.owner = request.user
+                    task.status = 'ASSIGNED'
+                    task.save()
+                    messages.success(request, "Task assigned to you successfully.")
+                else:
+                    messages.info(request, "Task is already assigned to you.")
+            else:
+                messages.warning(request, "No pending task found in the workflow.")
         else:
             # Start the workflow
             process = TenderApplicationFlow.start_noninteractive.run(application_id=application.id)
-            messages.success(request, "Workflow started successfully.")
-            print("Workflow started successfully.")
+            
+            # Get the first task and assign it to the current user
+            task = Task.objects.filter(
+                process=process,
+                status='NEW'
+            ).first()
+            
+            if task:
+                task.owner = request.user
+                task.status = 'ASSIGNED'
+                task.save()
+                messages.success(request, "Workflow started and task assigned to you successfully.")
+            else:
+                messages.warning(request, "Workflow started but no task was created.")
         
         return redirect('app1:tender_applications')
     
     except TenderApplication.DoesNotExist:
-        print(request)
         messages.error(request, "Application not found.")
         return redirect('app1:tender_applications') 
        
