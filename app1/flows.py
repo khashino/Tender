@@ -2,36 +2,99 @@ from viewflow import this
 from viewflow.workflow import flow, lock, act
 from viewflow.workflow.flow import views
 
-from .models import  HelloWorldProcess
+from .models import TenderApplicationProcess
+from shared_models.models import TenderApplication
 
-class HelloWorldFlow(flow.Flow):
-    process_class = HelloWorldProcess
 
-    start = (
-        flow.Start(views.CreateProcessView.as_view(fields=["text"]))
-        .Annotation(title="New message")
+class TenderApplicationFlow(flow.Flow):
+    process_class = TenderApplicationProcess
+    app_name = "tender_application"  # Ensure this matches the app name in `Application`
+    
+    process_title = "Tender Application Review"
+    process_description = "Review process for tender applications"
+
+    # Start the flow when a new application is submitted
+    start_noninteractive = flow.StartHandle(this.start_process).Next(this.review)
+
+    # Initial review step
+    review = (
+        flow.View(views.UpdateProcessView.as_view(fields=["notes", "is_shortlisted", "is_rejected"]))
+        .Annotation(title="Initial Review")
         .Permission(auto_create=True)
-        .Next(this.approve)
+        .Next(this.check_initial_review)
     )
 
-    approve = (
-        flow.View(views.UpdateProcessView.as_view(fields=["approved"]))
-        .Permission(auto_create=True)
-        .Next(this.check_approve)
+    # Check the result of the initial review
+    check_initial_review = (
+        flow.If(lambda activation: activation.process.is_shortlisted)
+        .Then(this.detailed_review)
+        .Else(this.check_rejected)
     )
 
-    check_approve = (
-        flow.If(act.process.approved)
-        .Then(this.send)
+    # Check if the application was rejected
+    check_rejected = (
+        flow.If(lambda activation: activation.process.is_rejected)
+        .Then(this.notify_rejection)
         .Else(this.end)
     )
 
-    send = (
-        flow.Function(this.send_hello_world_request)
+    # Detailed review for shortlisted applications
+    detailed_review = (
+        flow.View(views.UpdateProcessView.as_view(fields=["notes", "is_accepted", "is_rejected"]))
+        .Annotation(title="Detailed Review")
+        .Permission(auto_create=True)
+        .Next(this.check_final_decision)
+    )
+
+    # Check the final decision
+    check_final_decision = (
+        flow.If(lambda activation: activation.process.is_accepted)
+        .Then(this.notify_acceptance)
+        .Else(this.check_final_rejection)
+    )
+
+    # Check if the application was rejected in the final stage
+    check_final_rejection = (
+        flow.If(lambda activation: activation.process.is_rejected)
+        .Then(this.notify_rejection)
+        .Else(this.end)
+    )
+
+    # Notify the applicant of acceptance
+    notify_acceptance = (
+        flow.Function(this.send_acceptance_notification)
         .Next(this.end)
     )
 
+    # Notify the applicant of rejection
+    notify_rejection = (
+        flow.Function(this.send_rejection_notification)
+        .Next(this.end)
+    )
+
+    # End the flow
     end = flow.End()
 
-    def send_hello_world_request(self, activation):
-        print(activation.process.text)
+    def start_process(self, activation, application_id=None):
+        if application_id:
+            application = TenderApplication.objects.get(id=application_id)
+            activation.process.application = application
+            activation.process.save()
+        return activation.process
+
+    def send_acceptance_notification(self, activation):
+        application = activation.process.application
+        if application:
+            # Update the application status
+            application.status = 'accepted'
+            application.save()
+            
+
+
+    def send_rejection_notification(self, activation):
+        application = activation.process.application
+        if application:
+            # Update the application status
+            application.status = 'rejected'
+            application.save()
+           

@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from viewflow import jsonstore
 from django.utils import timezone
 from viewflow.workflow.models import Process
+from shared_models.models import TenderApplication
 
 class App1User(AbstractUser):
     groups = models.ManyToManyField(
@@ -28,13 +29,6 @@ class App1User(AbstractUser):
     def __str__(self):
         return self.username 
     
-
-class HelloWorldProcess(Process):
-    text = jsonstore.CharField(max_length=150)
-    approved = jsonstore.BooleanField(default=False)
-
-    class Meta:
-        proxy = True
 
 class Role(models.Model):
     name = models.CharField(max_length=100, verbose_name='نام نقش')
@@ -73,3 +67,15 @@ class UserRole(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.role.name}"
+    
+
+class TenderApplicationProcess(Process):
+    application = models.ForeignKey(TenderApplication, on_delete=models.CASCADE, null=True, blank=True)
+    notes = jsonstore.TextField(blank=True, null=True)
+    is_shortlisted = jsonstore.BooleanField(default=False)
+    is_accepted = jsonstore.BooleanField(default=False)
+    is_rejected = jsonstore.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = "Tender Application Process"
+        verbose_name_plural = "Tender Application Processes"    

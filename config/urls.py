@@ -3,13 +3,13 @@ from django.urls import path, include
 from viewflow.contrib.auth import AuthViewset
 from viewflow.urls import Application, Site, ModelViewset
 from viewflow.workflow.flow import FlowAppViewset
-from app1.flows import HelloWorldFlow
+from app1.flows import TenderApplicationFlow
 
 
 site = Site(title="ACME Corp", viewsets=[
     Application(
-        title='Sample App', icon='people', app_name='sample', viewsets=[
-            FlowAppViewset(HelloWorldFlow, icon="assignment"),
+        title='Tender Applications', icon='business_center', app_name='tender_application', viewsets=[
+            FlowAppViewset(TenderApplicationFlow, icon="description"),
         ]
     ),
 ])
