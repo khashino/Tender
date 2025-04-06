@@ -9,11 +9,32 @@ from django.contrib.auth.decorators import login_required, permission_required
 from app2.models import Company, CompanyDocument
 from django.contrib.auth.models import Permission
 from django.db.models import Q
+from django.utils import timezone
+from shared_models.models import TenderApplication, Tender
+from django.core.files.storage import FileSystemStorage
+import os
 
 def home(request):
     if request.user.is_authenticated and not isinstance(request.user, App1User):
         logout(request)
-    return render(request, 'app1/home.html')
+    
+    # Get tender statistics
+    new_tenders = Tender.objects.filter(status='published').count()
+    pending_tenders = Tender.objects.filter(status='draft').count()
+    approved_tenders = Tender.objects.filter(status='awarded').count()
+    rejected_tenders = Tender.objects.filter(status='cancelled').count()
+    
+    # Get recent tenders
+    recent_tenders = Tender.objects.all().order_by('-published_date')[:5]
+    
+    context = {
+        'new_tenders': new_tenders,
+        'pending_tenders': pending_tenders,
+        'approved_tenders': approved_tenders,
+        'rejected_tenders': rejected_tenders,
+        'recent_tenders': recent_tenders
+    }
+    return render(request, 'app1/home.html', context)
 
 def login_view(request):
     if request.user.is_authenticated and isinstance(request.user, App1User):
@@ -173,4 +194,38 @@ def assign_user_roles(request, user_id):
         'user': user,
         'roles': roles,
         'user_roles': user_roles
-    }) 
+    })
+
+@login_required
+@permission_required('app1.add_tenderapplication', raise_exception=True)
+def create_tender(request):
+    if request.method == 'POST':
+        try:
+            # Generate a unique reference number (you might want to make this more sophisticated)
+            reference_number = f"TDR-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+            
+            # Create tender
+            tender = Tender.objects.create(
+                title=request.POST.get('title'),
+                description=request.POST.get('description'),
+                reference_number=reference_number,
+                closing_date=request.POST.get('deadline'),
+                estimated_value=request.POST.get('budget'),
+                currency='IRR',  # Iranian Rial
+                status='published'  # Set as published by default
+            )
+
+            # Handle file uploads
+            if 'documents' in request.FILES:
+                fs = FileSystemStorage()
+                for file in request.FILES.getlist('documents'):
+                    filename = fs.save(f'tender_documents/{tender.id}/{file.name}', file)
+                    # You might want to create a TenderDocument model to store these files
+
+            messages.success(request, 'مناقصه با موفقیت ایجاد شد.')
+            return redirect('app1:home')
+        except Exception as e:
+            messages.error(request, f'خطا در ایجاد مناقصه: {str(e)}')
+            return redirect('app1:create_tender')
+
+    return render(request, 'app1/tender/create_tender.html') 
