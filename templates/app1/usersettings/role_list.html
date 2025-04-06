@@ -1,0 +1,71 @@
+{% extends 'app1/base.html' %}
+
+{% block title %}مدیریت نقش‌ها - پنل مدیریت مناقصات{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">مدیریت نقش‌ها</h4>
+                    <a href="{% url 'app1:role_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        ایجاد نقش جدید
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if roles %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>نام نقش</th>
+                                        <th>توضیحات</th>
+                                        <th>تعداد دسترسی‌ها</th>
+                                        <th>تاریخ ایجاد</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for role in roles %}
+                                        <tr>
+                                            <td>{{ role.name }}</td>
+                                            <td>{{ role.description|truncatechars:50 }}</td>
+                                            <td>{{ role.permissions.count }}</td>
+                                            <td>{{ role.created_at|date:"Y/m/d" }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{% url 'app1:role_edit' role.id %}" class="btn btn-sm btn-primary">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <a href="{% url 'app1:role_delete' role.id %}" class="btn btn-sm btn-danger" onclick="return confirm('آیا از حذف این نقش اطمینان دارید؟')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            هیچ نقشی ایجاد نشده است.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

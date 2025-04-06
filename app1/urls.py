@@ -11,4 +11,10 @@ urlpatterns = [
     path('company-approvals/', views.company_approvals, name='company_approvals'),
     path('company-approvals/approve/<int:company_id>/', views.approve_company, name='approve_company'),
     path('company-approvals/reject/<int:company_id>/', views.reject_company, name='reject_company'),
+    path('roles/', views.role_list, name='role_list'),
+    path('roles/create/', views.role_create, name='role_create'),
+    path('roles/<int:role_id>/edit/', views.role_edit, name='role_edit'),
+    path('roles/<int:role_id>/delete/', views.role_delete, name='role_delete'),
+    path('user-roles/', views.user_roles, name='user_roles'),
+    path('user-roles/<int:user_id>/assign/', views.assign_user_roles, name='assign_user_roles'),
 ] 

@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.utils.translation import gettext_lazy as _
 from viewflow import jsonstore
 from django.utils import timezone
@@ -7,24 +7,23 @@ from viewflow.workflow.models import Process
 
 class App1User(AbstractUser):
     groups = models.ManyToManyField(
-        'auth.Group',
-        related_name='app1_users',
+        Group,
+        verbose_name=_('groups'),
         blank=True,
-        help_text='The groups this user belongs to.',
-        verbose_name='groups',
+        help_text=_('The groups this user belongs to.'),
+        related_name='app1_users',
     )
     user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='app1_users',
+        Permission,
+        verbose_name=_('user permissions'),
         blank=True,
-        help_text='Specific permissions for this user.',
-        verbose_name='user permissions',
+        help_text=_('Specific permissions for this user.'),
+        related_name='app1_users',
     )
 
     class Meta:
-        db_table = 'app1_users'
-        verbose_name = 'App1 User'
-        verbose_name_plural = 'App1 Users'
+        verbose_name = 'کاربر'
+        verbose_name_plural = 'کاربران'
 
     def __str__(self):
         return self.username 
@@ -36,3 +35,41 @@ class HelloWorldProcess(Process):
 
     class Meta:
         proxy = True
+
+class Role(models.Model):
+    name = models.CharField(max_length=100, verbose_name='نام نقش')
+    description = models.TextField(blank=True, verbose_name='توضیحات')
+    permissions = models.ManyToManyField(
+        Permission,
+        verbose_name='دسترسی‌ها',
+        blank=True,
+        related_name='roles'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'نقش'
+        verbose_name_plural = 'نقش‌ها'
+        permissions = [
+            ('can_manage_roles', 'Can manage roles'),
+            ('can_assign_roles', 'Can assign roles to users'),
+            ('can_view_all_roles', 'Can view all roles'),
+            ('can_export_roles', 'Can export roles'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+class UserRole(models.Model):
+    user = models.ForeignKey(App1User, on_delete=models.CASCADE, related_name='user_roles', verbose_name='کاربر')
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='user_roles', verbose_name='نقش')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'نقش کاربر'
+        verbose_name_plural = 'نقش‌های کاربران'
+        unique_together = ('user', 'role')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role.name}"

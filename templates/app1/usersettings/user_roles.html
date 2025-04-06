@@ -1,0 +1,69 @@
+{% extends 'app1/base.html' %}
+
+{% block title %}مدیریت نقش‌های کاربران - پنل مدیریت مناقصات{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">مدیریت نقش‌های کاربران</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if users %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>نام کاربری</th>
+                                        <th>نام و نام خانوادگی</th>
+                                        <th>ایمیل</th>
+                                        <th>نقش‌های فعلی</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                        <tr>
+                                            <td>{{ user.username }}</td>
+                                            <td>{{ user.get_full_name|default:"-" }}</td>
+                                            <td>{{ user.email }}</td>
+                                            <td>
+                                                {% for user_role in user.user_roles.all %}
+                                                    <span class="badge bg-primary me-1">{{ user_role.role.name }}</span>
+                                                {% empty %}
+                                                    <span class="text-muted">بدون نقش</span>
+                                                {% endfor %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'app1:assign_user_roles' user.id %}" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-person-gear me-1"></i>
+                                                    مدیریت نقش‌ها
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            هیچ کاربری یافت نشد.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
