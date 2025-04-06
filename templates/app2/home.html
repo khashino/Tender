@@ -119,9 +119,16 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="#" class="btn btn-sm btn-primary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'app2:tender_detail' tender.id %}" class="btn btn-sm btn-primary" title="مشاهده جزئیات">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if tender.status == 'published' %}
+                                            <a href="{% url 'app2:apply_to_tender' tender.id %}" class="btn btn-sm btn-success" title="ثبت درخواست">
+                                                <i class="bi bi-plus-circle"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 {% empty %}

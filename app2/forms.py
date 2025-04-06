@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import App2User, Company, CompanyDocument
+from shared_models.models import TenderApplication
 
 class App2UserCreationForm(UserCreationForm):
     class Meta:
@@ -42,4 +43,15 @@ class CompanyDocumentForm(forms.ModelForm):
             'document_type': forms.Select(attrs={'class': 'form-control'}),
             'file': forms.FileInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+class TenderApplicationForm(forms.ModelForm):
+    class Meta:
+        model = TenderApplication
+        fields = ['cover_letter', 'price_quote', 'proposal_document', 'additional_document']
+        widgets = {
+            'cover_letter': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+            'price_quote': forms.NumberInput(attrs={'class': 'form-control'}),
+            'proposal_document': forms.FileInput(attrs={'class': 'form-control'}),
+            'additional_document': forms.FileInput(attrs={'class': 'form-control'}),
         } 

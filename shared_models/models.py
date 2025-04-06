@@ -31,8 +31,8 @@ class Tender(models.Model):
 
 
 def application_directory_path(instance, filename):
-    # Files will be uploaded to MEDIA_ROOT/user_<id>/applications/<filename>
-    return f"{instance.applicant.user.username}/applications/{filename}"
+    # Files will be uploaded to MEDIA_ROOT/media/{username}/applications/{filename}
+    return f"media/{instance.applicant.user.username}/applications/{filename}"
 
 class TenderApplication(models.Model):
     STATUS_CHOICES = [
@@ -57,5 +57,5 @@ class TenderApplication(models.Model):
         unique_together = ('tender', 'applicant')
     
     def __str__(self):
-        return f"Application from {self.applicant.company_name} for {self.tender.title}"
+        return f"Application from {self.applicant.name} for {self.tender.title}"
 

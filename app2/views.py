@@ -8,9 +8,9 @@ from django.http import HttpResponse, FileResponse
 from django.conf import settings
 import os
 from .models import App2User, Company, CompanyDocument
-from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm
+from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm, TenderApplicationForm
 from .auth_backend import App2AuthBackend
-from shared_models.models import Tender
+from shared_models.models import Tender, TenderApplication
 from django.utils import timezone
 
 def home(request):
@@ -137,8 +137,11 @@ def download_document(request, document_id):
 
 @login_required
 def tender_list(request):
-    tenders = Tender.objects.all()
-    return render(request, 'app2/tender_list.html', {'tenders': tenders})
+    tenders = Tender.objects.all().order_by('-published_date')
+    context = {
+        'tenders': tenders,
+    }
+    return render(request, 'app2/tender_list.html', context)
 
 @login_required
 def tender_create(request):
@@ -169,4 +172,42 @@ def tender_create(request):
 @login_required
 def tender_detail(request, tender_id):
     tender = get_object_or_404(Tender, id=tender_id)
-    return render(request, 'app2/tender_detail.html', {'tender': tender}) 
+    return render(request, 'app2/tender_detail.html', {'tender': tender})
+
+@login_required
+def apply_to_tender(request, tender_id):
+    tender = get_object_or_404(Tender, id=tender_id)
+    company = request.user.company
+    
+    # Check if tender is still open
+    if tender.status != 'published':
+        messages.error(request, 'This tender is no longer accepting applications.')
+        return redirect('app2:tender_list')
+    
+    # Check if company has already applied
+    if TenderApplication.objects.filter(tender=tender, applicant=company).exists():
+        messages.error(request, 'You have already applied to this tender.')
+        return redirect('app2:tender_list')
+    
+    if request.method == 'POST':
+        form = TenderApplicationForm(request.POST, request.FILES)
+        if form.is_valid():
+            application = form.save(commit=False)
+            application.tender = tender
+            application.applicant = company
+            application.save()
+            
+            # Start the TenderApplicationFlow
+            from app1.flows import TenderApplicationFlow
+            process = TenderApplicationFlow.start_noninteractive.run(application_id=application.id)
+            
+            messages.success(request, 'Your application has been submitted successfully!')
+            return redirect('app2:tender_list')
+    else:
+        form = TenderApplicationForm()
+    
+    context = {
+        'tender': tender,
+        'form': form,
+    }
+    return render(request, 'app2/apply_to_tender.html', context) 
