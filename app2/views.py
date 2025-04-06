@@ -141,7 +141,7 @@ def tender_list(request):
     context = {
         'tenders': tenders,
     }
-    return render(request, 'app2/tender_list.html', context)
+    return render(request, 'app2/tender/tender_list.html', context)
 
 @login_required
 def tender_create(request):
@@ -172,7 +172,7 @@ def tender_create(request):
 @login_required
 def tender_detail(request, tender_id):
     tender = get_object_or_404(Tender, id=tender_id)
-    return render(request, 'app2/tender_detail.html', {'tender': tender})
+    return render(request, 'app2/tender/tender_detail.html', {'tender': tender})
 
 @login_required
 def apply_to_tender(request, tender_id):
@@ -210,4 +210,4 @@ def apply_to_tender(request, tender_id):
         'tender': tender,
         'form': form,
     }
-    return render(request, 'app2/apply_to_tender.html', context) 
+    return render(request, 'app2/tender/apply_to_tender.html', context) 
