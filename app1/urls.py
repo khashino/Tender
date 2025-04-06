@@ -18,4 +18,7 @@ urlpatterns = [
     path('user-roles/', views.user_roles, name='user_roles'),
     path('user-roles/<int:user_id>/assign/', views.assign_user_roles, name='assign_user_roles'),
     path('tender/create/', views.create_tender, name='create_tender'),
+    path('tender/applications/', views.tender_applications, name='tender_applications'),
+    path('tender/applications/<int:application_id>/review/', views.review_application, name='review_application'),
+    path('tender/applications/<int:application_id>/start-workflow/', views.start_application_workflow, name='start_application_workflow'),
 ] 

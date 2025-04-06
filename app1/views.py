@@ -13,6 +13,8 @@ from django.utils import timezone
 from shared_models.models import TenderApplication, Tender
 from django.core.files.storage import FileSystemStorage
 import os
+from app1.models import TenderApplicationProcess
+from app1.flows import TenderApplicationFlow
 
 def home(request):
     if request.user.is_authenticated and not isinstance(request.user, App1User):
@@ -228,4 +230,48 @@ def create_tender(request):
             messages.error(request, f'خطا در ایجاد مناقصه: {str(e)}')
             return redirect('app1:create_tender')
 
-    return render(request, 'app1/tender/create_tender.html') 
+    return render(request, 'app1/tender/create_tender.html')
+
+@login_required
+def tender_applications(request):
+    applications = TenderApplication.objects.all().order_by('-submitted_at')
+    context = {
+        'applications': applications,
+    }
+    return render(request, 'app1/tender/applications.html', context)
+
+@login_required
+def review_application(request, application_id):
+    application = get_object_or_404(TenderApplication, id=application_id)
+    context = {
+        'application': application,
+    }
+    return render(request, 'app1/tender/review_application.html', context)
+
+@login_required
+def start_application_workflow(request, application_id):
+    """Start the workflow for a tender application"""
+    try:
+        application = TenderApplication.objects.get(id=application_id)
+        
+        # Check if a workflow already exists for this application
+        existing_process = TenderApplicationProcess.objects.filter(
+            application=application
+        ).exists()
+        
+        if existing_process:
+            messages.warning(request, "A workflow already exists for this application.")
+            print("A workflow already exists for this application.")
+        else:
+            # Start the workflow
+            process = TenderApplicationFlow.start_noninteractive.run(application_id=application.id)
+            messages.success(request, "Workflow started successfully.")
+            print("Workflow started successfully.")
+        
+        return redirect('app1:tender_applications')
+    
+    except TenderApplication.DoesNotExist:
+        print(request)
+        messages.error(request, "Application not found.")
+        return redirect('app1:tender_applications') 
+       
