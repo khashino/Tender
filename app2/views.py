@@ -14,8 +14,8 @@ from shared_models.models import Tender
 from django.utils import timezone
 
 def home(request):
-    if not request.user.is_authenticated:
-        return redirect('app2:login')
+    #if not request.user.is_authenticated:
+    #    return redirect('app2:login')
     
     # Get the latest 5 tenders
     latest_tenders = Tender.objects.all().order_by('-published_date')[:5]

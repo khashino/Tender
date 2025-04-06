@@ -173,10 +173,21 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#settingsSubmenu">
                                 <i class="bi bi-gear"></i>
                                 تنظیمات
+                                <i class="bi bi-chevron-down float-start"></i>
                             </a>
+                            <div class="collapse" id="settingsSubmenu">
+                                <ul class="nav flex-column ps-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'app1:company_approvals' %}">
+                                            <i class="bi bi-building-check"></i>
+                                            تایید شرکت‌ها
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </li>
                     </ul>
                 </div>
