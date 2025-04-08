@@ -7,7 +7,7 @@ from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse, FileResponse
 from django.conf import settings
 import os
-from .models import App2User, Company, CompanyDocument
+from .models import App2User, Company, CompanyDocument, Announcement, LatestNews
 from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm, TenderApplicationForm
 from .auth_backend import App2AuthBackend
 from shared_models.models import Tender, TenderApplication
@@ -17,10 +17,14 @@ def home(request):
     #if not request.user.is_authenticated:
     #    return redirect('app2:login')
     
-    # Get the latest 5 tenders
+    # Get the latest announcements, news and tenders
+    announcements = Announcement.objects.filter(is_active=True).order_by('-created_at')[:5]
+    latest_news = LatestNews.objects.filter(is_active=True).order_by('-created_at')[:5]
     latest_tenders = Tender.objects.all().order_by('-published_date')[:5]
     
     context = {
+        'announcements': announcements,
+        'latest_news': latest_news,
         'latest_tenders': latest_tenders,
     }
     return render(request, 'app2/home.html', context)
