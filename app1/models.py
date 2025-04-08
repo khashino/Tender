@@ -31,7 +31,121 @@ class App1User(AbstractUser):
     
 
 class Role(models.Model):
-    name = models.CharField(max_length=100, verbose_name='نام نقش')
+    ROLE_CHOICES = [
+        ('purchase_expert', 'کارشناس خرید'),
+        ('team_leader', 'سرپرست خرید'),
+        ('supply_chain_manager', 'مدیر زنجیره تامین'),
+        ('technical_evaluator', 'ارزیاب فنی'),
+        ('financial_deputy', 'معاونت مالی و ستادی'),
+        ('financial_manager', 'مدیر مالی'),
+        ('commercial_team_evaluator', 'ارزیاب تیم بازرگانی'),
+        ('financial_team_evaluator', 'ارزیاب تیم مالی'),
+        ('transaction_commission', 'کمیسیون معاملات'),
+        ('ceo', 'مدیر عامل'),
+    ]
+
+    # Define permission groups for each role
+    ROLE_PERMISSIONS = {
+        'purchase_expert': [
+            'view_page_home',
+            'view_page_tender_applications',
+            'view_page_tender_details',
+            'view_page_company_profiles',
+            'view_page_application_review',
+            'view_page_application_execute',
+        ],
+        'team_leader': [
+            'view_page_home',
+            'view_page_tender_applications',
+            'view_page_tender_details',
+            'view_page_company_profiles',
+            'view_page_application_review',
+            'view_page_application_execute',
+            'view_page_application_approval',
+        ],
+        'supply_chain_manager': [
+            'view_page_home',
+            'view_page_tender_applications',
+            'view_page_tender_details',
+            'view_page_company_profiles',
+            'view_page_application_review',
+            'view_page_application_execute',
+            'view_page_application_approval',
+            'view_page_supplier_management',
+        ],
+        'technical_evaluator': [
+            'view_page_home',
+            'view_page_tender_applications',
+            'view_page_tender_details',
+            'view_page_company_profiles',
+            'view_page_application_review',
+            'view_page_application_execute',
+            'view_page_technical_evaluation',
+        ],
+        'financial_deputy': [
+            'view_page_home',
+            'view_page_tender_applications',
+            'view_page_tender_details',
+            'view_page_company_profiles',
+            'view_page_application_review',
+            'view_page_application_execute',
+            'view_page_financial_evaluation',
+            'view_page_financial_approval',
+        ],
+        'financial_manager': [
+            'view_page_home',
+            'view_page_tender_applications',
+            'view_page_tender_details',
+            'view_page_company_profiles',
+            'view_page_application_review',
+            'view_page_application_execute',
+            'view_page_financial_evaluation',
+            'view_page_financial_approval',
+            'view_page_budget_management',
+        ],
+        'commercial_team_evaluator': [
+            'view_page_home',
+            'view_page_tender_applications',
+            'view_page_tender_details',
+            'view_page_company_profiles',
+            'view_page_application_review',
+            'view_page_application_execute',
+            'view_page_commercial_evaluation',
+        ],
+        'financial_team_evaluator': [
+            'view_page_home',
+            'view_page_tender_applications',
+            'view_page_tender_details',
+            'view_page_company_profiles',
+            'view_page_application_review',
+            'view_page_application_execute',
+            'view_page_financial_evaluation',
+        ],
+        'transaction_commission': [
+            'view_page_home',
+            'view_page_tender_applications',
+            'view_page_tender_details',
+            'view_page_company_profiles',
+            'view_page_application_review',
+            'view_page_application_execute',
+            'view_page_transaction_approval',
+            'view_page_final_decision',
+        ],
+        'ceo': [
+            'view_page_home',
+            'view_page_tender_applications',
+            'view_page_tender_details',
+            'view_page_company_profiles',
+            'view_page_application_review',
+            'view_page_application_execute',
+            'view_page_transaction_approval',
+            'view_page_final_decision',
+            'view_page_role_management',
+            'view_page_user_management',
+        ],
+    }
+
+    name = models.CharField(max_length=100, choices=ROLE_CHOICES, verbose_name='نام نقش')
     description = models.TextField(blank=True, verbose_name='توضیحات')
     permissions = models.ManyToManyField(
         Permission,
@@ -46,14 +160,60 @@ class Role(models.Model):
         verbose_name = 'نقش'
         verbose_name_plural = 'نقش‌ها'
         permissions = [
-            ('can_manage_roles', 'Can manage roles'),
-            ('can_assign_roles', 'Can assign roles to users'),
-            ('can_view_all_roles', 'Can view all roles'),
-            ('can_export_roles', 'Can export roles'),
+            # Home and Dashboard
+            ('view_page_home', 'Can view home page'),
+            
+            # Tender Related Pages
+            ('view_page_tender_applications', 'Can view tender applications page'),
+            ('view_page_tender_details', 'Can view tender details page'),
+            
+            # Company Related Pages
+            ('view_page_company_profiles', 'Can view company profiles page'),
+            
+            # Application Related Pages
+            ('view_page_application_review', 'Can view application review page'),
+            ('view_page_application_execute', 'Can view application execute page'),
+            ('view_page_application_approval', 'Can view application approval page'),
+            
+            # Evaluation Pages
+            ('view_page_technical_evaluation', 'Can view technical evaluation page'),
+            ('view_page_financial_evaluation', 'Can view financial evaluation page'),
+            ('view_page_commercial_evaluation', 'Can view commercial evaluation page'),
+            
+            # Approval Pages
+            ('view_page_financial_approval', 'Can view financial approval page'),
+            ('view_page_transaction_approval', 'Can view transaction approval page'),
+            ('view_page_final_decision', 'Can view final decision page'),
+            
+            # Management Pages
+            ('view_page_supplier_management', 'Can view supplier management page'),
+            ('view_page_budget_management', 'Can view budget management page'),
+            ('view_page_role_management', 'Can view role management page'),
+            ('view_page_user_management', 'Can view user management page'),
         ]
 
     def __str__(self):
-        return self.name
+        return self.get_name_display()
+
+    def get_name_display(self):
+        return dict(self.ROLE_CHOICES).get(self.name, self.name)
+
+    def assign_default_permissions(self):
+        """Assign default permissions based on the role"""
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+        
+        # Clear existing permissions
+        self.permissions.clear()
+        
+        # Get permissions for this role
+        permission_codenames = self.ROLE_PERMISSIONS.get(self.name, [])
+        
+        # Get all permissions
+        permissions = Permission.objects.filter(codename__in=permission_codenames)
+        
+        # Assign permissions to the role
+        self.permissions.add(*permissions)
 
 class UserRole(models.Model):
     user = models.ForeignKey(App1User, on_delete=models.CASCADE, related_name='user_roles', verbose_name='کاربر')
