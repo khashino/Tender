@@ -91,4 +91,72 @@ class CompanyDocument(models.Model):
         verbose_name_plural = 'اسناد شرکت'
 
     def __str__(self):
-        return f"{self.company.name} - {self.get_document_type_display()}" 
+        return f"{self.company.name} - {self.get_document_type_display()}"
+
+class Announcement(models.Model):
+    title = models.CharField(max_length=200, verbose_name='عنوان')
+    content = models.TextField(verbose_name='محتوا')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+
+    class Meta:
+        verbose_name = 'اعلان'
+        verbose_name_plural = 'اعلان‌ها'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
+
+class LatestNews(models.Model):
+    title = models.CharField(max_length=200, verbose_name='عنوان')
+    content = models.TextField(verbose_name='محتوا')
+    image = models.ImageField(upload_to='news_images/', blank=True, null=True, verbose_name='تصویر')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+
+    class Meta:
+        verbose_name = 'خبر جدید'
+        verbose_name_plural = 'اخبار جدید'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
+
+class Message(models.Model):
+    receiver = models.ForeignKey(App2User, on_delete=models.CASCADE, related_name='received_messages', verbose_name='گیرنده')
+    subject = models.CharField(max_length=200, verbose_name='موضوع')
+    content = models.TextField(verbose_name='محتوا')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False, verbose_name='خوانده شده')
+
+    class Meta:
+        verbose_name = 'پیام'
+        verbose_name_plural = 'پیام‌ها'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.subject} - System to {self.receiver}"
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('info', 'اطلاعیه'),
+        ('warning', 'هشدار'),
+        ('success', 'موفقیت'),
+        ('error', 'خطا'),
+    )
+
+    title = models.CharField(max_length=200, verbose_name='عنوان')
+    message = models.TextField(verbose_name='پیام')
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='info', verbose_name='نوع اعلان')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+
+    class Meta:
+        verbose_name = 'اعلان'
+        verbose_name_plural = 'اعلان‌ها'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} - System Notification" 
