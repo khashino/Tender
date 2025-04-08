@@ -1,0 +1,86 @@
+{% extends 'app2/base.html' %}
+
+{% block title %}پرسش‌های متداول - پنل مدیریت مناقصات{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-question-circle me-2"></i>
+                        پرسش‌های متداول
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <!-- Registration Questions -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#registrationQuestions">
+                                    سوالات ثبت‌نام و عضویت
+                                </button>
+                            </h2>
+                            <div id="registrationQuestions" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <div class="mb-4">
+                                        <h6 class="fw-bold">چگونه می‌توانم در سامانه ثبت‌نام کنم؟</h6>
+                                        <p>برای ثبت‌نام، روی دکمه "ثبت‌نام" در بالای صفحه کلیک کرده و فرم مربوطه را تکمیل نمایید. پس از تکمیل اطلاعات اولیه، باید اطلاعات شرکت خود را نیز وارد کنید.</p>
+                                    </div>
+                                    <div class="mb-4">
+                                        <h6 class="fw-bold">چه مدارکی برای ثبت‌نام نیاز است؟</h6>
+                                        <p>برای ثبت‌نام نیاز به اسکن مدارک شرکت شامل: آگهی تأسیس، اساسنامه، آخرین تغییرات روزنامه رسمی و گواهی ارزش افزوده دارید.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tender Questions -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tenderQuestions">
+                                    سوالات مربوط به مناقصات
+                                </button>
+                            </h2>
+                            <div id="tenderQuestions" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <div class="mb-4">
+                                        <h6 class="fw-bold">چگونه می‌توانم در مناقصات شرکت کنم؟</h6>
+                                        <p>پس از تکمیل پروفایل شرکت، می‌توانید از بخش "جستجوی مناقصات" مناقصات فعال را مشاهده و در آنها شرکت کنید.</p>
+                                    </div>
+                                    <div class="mb-4">
+                                        <h6 class="fw-bold">آیا امکان ویرایش پیشنهاد پس از ارسال وجود دارد؟</h6>
+                                        <p>خیر، پس از ثبت نهایی پیشنهاد امکان ویرایش وجود ندارد. لطفاً قبل از ارسال نهایی، تمام اطلاعات را با دقت بررسی کنید.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Questions -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#technicalQuestions">
+                                    سوالات فنی
+                                </button>
+                            </h2>
+                            <div id="technicalQuestions" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <div class="mb-4">
+                                        <h6 class="fw-bold">فرمت‌های مجاز برای آپلود اسناد کدامند؟</h6>
+                                        <p>فایل‌های مجاز شامل PDF، JPG و PNG با حداکثر حجم 10 مگابایت می‌باشند.</p>
+                                    </div>
+                                    <div class="mb-4">
+                                        <h6 class="fw-bold">در صورت بروز مشکل فنی چه کنم؟</h6>
+                                        <p>در صورت بروز هرگونه مشکل فنی، می‌توانید از طریق بخش "تماس با ما" با کارشناسان ما در ارتباط باشید.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

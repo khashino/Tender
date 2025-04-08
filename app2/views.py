@@ -7,7 +7,7 @@ from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse, FileResponse
 from django.conf import settings
 import os
-from .models import App2User, Company, CompanyDocument, Announcement, LatestNews
+from .models import App2User, Company, CompanyDocument, Announcement, LatestNews, Notification, Message
 from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm, TenderApplicationForm
 from .auth_backend import App2AuthBackend
 from shared_models.models import Tender, TenderApplication
@@ -214,4 +214,23 @@ def apply_to_tender(request, tender_id):
         'tender': tender,
         'form': form,
     }
-    return render(request, 'app2/tender/apply_to_tender.html', context) 
+    return render(request, 'app2/tender/apply_to_tender.html', context)
+
+def news_announcements(request):
+    announcements = Announcement.objects.filter(is_active=True).order_by('-created_at')
+    latest_news = LatestNews.objects.filter(is_active=True).order_by('-created_at')
+    
+    context = {
+        'announcements': announcements,
+        'latest_news': latest_news,
+    }
+    return render(request, 'app2/news_announcements.html', context)
+
+def rules(request):
+    return render(request, 'app2/rules.html')
+
+def faq(request):
+    return render(request, 'app2/faq.html')
+
+def help(request):
+    return render(request, 'app2/help.html') 

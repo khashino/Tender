@@ -1,0 +1,100 @@
+{% extends 'app2/base.html' %}
+
+{% block title %}قوانین و مقررات - پنل مدیریت مناقصات{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text me-2"></i>
+                        قوانین و مقررات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="rulesAccordion">
+                        <!-- General Rules -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#generalRules">
+                                    قوانین عمومی
+                                </button>
+                            </h2>
+                            <div id="generalRules" class="accordion-collapse collapse show" data-bs-parent="#rulesAccordion">
+                                <div class="accordion-body">
+                                    <ul class="list-unstyled">
+                                        <li class="mb-3">
+                                            <h6 class="fw-bold">ثبت‌نام و عضویت</h6>
+                                            <p>برای شرکت در مناقصات، ابتدا باید در سامانه ثبت‌نام کرده و اطلاعات شرکت خود را تکمیل نمایید.</p>
+                                        </li>
+                                        <li class="mb-3">
+                                            <h6 class="fw-bold">تکمیل پروفایل</h6>
+                                            <p>تکمیل تمامی اطلاعات خواسته شده در پروفایل شرکت الزامی است.</p>
+                                        </li>
+                                        <li class="mb-3">
+                                            <h6 class="fw-bold">مسئولیت اطلاعات</h6>
+                                            <p>مسئولیت صحت تمامی اطلاعات ارائه شده بر عهده شرکت‌کننده است.</p>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tender Rules -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tenderRules">
+                                    قوانین شرکت در مناقصات
+                                </button>
+                            </h2>
+                            <div id="tenderRules" class="accordion-collapse collapse" data-bs-parent="#rulesAccordion">
+                                <div class="accordion-body">
+                                    <ul class="list-unstyled">
+                                        <li class="mb-3">
+                                            <h6 class="fw-bold">مهلت ارسال پیشنهادات</h6>
+                                            <p>ارسال پیشنهادات تنها تا زمان مشخص شده در هر مناقصه امکان‌پذیر است.</p>
+                                        </li>
+                                        <li class="mb-3">
+                                            <h6 class="fw-bold">اسناد مورد نیاز</h6>
+                                            <p>تمامی اسناد خواسته شده در مناقصه باید به صورت کامل و خوانا ارسال شوند.</p>
+                                        </li>
+                                        <li class="mb-3">
+                                            <h6 class="fw-bold">تغییر در پیشنهادات</h6>
+                                            <p>پس از ثبت نهایی پیشنهاد، امکان تغییر یا حذف آن وجود ندارد.</p>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Rules -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#financialRules">
+                                    قوانین مالی
+                                </button>
+                            </h2>
+                            <div id="financialRules" class="accordion-collapse collapse" data-bs-parent="#rulesAccordion">
+                                <div class="accordion-body">
+                                    <ul class="list-unstyled">
+                                        <li class="mb-3">
+                                            <h6 class="fw-bold">ضمانت‌نامه‌ها</h6>
+                                            <p>ارائه ضمانت‌نامه‌های بانکی مطابق با شرایط هر مناقصه الزامی است.</p>
+                                        </li>
+                                        <li class="mb-3">
+                                            <h6 class="fw-bold">قیمت پیشنهادی</h6>
+                                            <p>قیمت‌های پیشنهادی باید به صورت شفاف و با جزئیات کامل ارائه شوند.</p>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

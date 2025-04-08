@@ -149,35 +149,56 @@
                     </div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'app2:home' %}">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'app2:home' %}">
                                 <i class="bi bi-house-door"></i>
                                 داشبورد
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'news_announcements' %}active{% endif %}" href="{% url 'app2:news_announcements' %}">
+                                <i class="bi bi-newspaper"></i>
+                                اخبار و اطلاعیه‌ها
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'rules' %}active{% endif %}" href="{% url 'app2:rules' %}">
+                                <i class="bi bi-file-text"></i>
+                                قوانین و مقررات
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'faq' %}active{% endif %}" href="{% url 'app2:faq' %}">
+                                <i class="bi bi-question-circle"></i>
+                                پرسش‌های متداول
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'help' %}active{% endif %}" href="{% url 'app2:help' %}">
+                                <i class="bi bi-info-circle"></i>
+                                راهنما
+                            </a>
+                        </li>
+                        
+                        {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'tender_list' %}active{% endif %}" href="#">
                                 <i class="bi bi-search"></i>
                                 جستجوی مناقصات
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'my_proposals' %}active{% endif %}" href="#">
                                 <i class="bi bi-file-earmark-text"></i>
                                 پیشنهادات من
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="bi bi-check-circle"></i>
-                                مناقصات برنده شده
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" href="{% url 'app2:settings' %}">
                                 <i class="bi bi-gear"></i>
-                                تنظیمات
+                                تکمیل اطلاعات شرکت
                             </a>
                         </li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>
@@ -192,6 +213,118 @@
                         <div class="d-flex align-items-center">
                             {% if user.is_authenticated %}
                                 <div class="d-flex align-items-center">
+                                    <!-- Notifications Dropdown -->
+                                    <div class="dropdown me-3">
+                                        <div class="position-relative" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-bell fs-4 text-primary"></i>
+                                            {% if notification_count > 0 %}
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                                {{ notification_count }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <ul class="dropdown-menu dropdown-menu-end p-0 shadow-lg" style="min-width: 350px; border: none; border-radius: 10px;">
+                                            <li class="dropdown-header bg-light py-3 px-4 border-bottom">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0 fw-bold">اعلانات</h6>
+                                                    <a href="#" class="text-primary small text-decoration-none">
+                                                        <i class="bi bi-list-ul me-1"></i>
+                                                        مشاهده همه
+                                                    </a>
+                                                </div>
+                                            </li>
+                                            {% for notification in notifications %}
+                                            <li>
+                                                <a class="dropdown-item py-3 px-4 border-bottom" href="#" style="transition: all 0.2s;">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="flex-shrink-0">
+                                                            <div class="rounded-circle p-2 bg-{{ notification.notification_type }}-subtle">
+                                                                <i class="bi bi-bell-fill text-{{ notification.notification_type }}"></i>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex-grow-1 ms-3">
+                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                <h6 class="mb-1 fw-bold">{{ notification.title }}</h6>
+                                                                <small class="text-muted">{{ notification.created_at|date:"H:i" }}</small>
+                                                            </div>
+                                                            <p class="mb-0 text-muted small">{{ notification.message|truncatewords:15 }}</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            {% empty %}
+                                            <li class="text-center py-4">
+                                                <div class="text-muted">
+                                                    <i class="bi bi-bell-slash display-6 mb-2"></i>
+                                                    <p class="mb-0">هیچ اعلانی موجود نیست</p>
+                                                </div>
+                                            </li>
+                                            {% endfor %}
+                                            <li class="dropdown-footer bg-light py-2 px-4 text-center">
+                                                <a href="#" class="text-primary small text-decoration-none">
+                                                    <i class="bi bi-arrow-down-circle me-1"></i>
+                                                    مشاهده اعلانات قدیمی‌تر
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <!-- Messages Dropdown -->
+                                    <div class="dropdown me-3">
+                                        <div class="position-relative" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-envelope fs-4 text-primary"></i>
+                                            {% if message_count > 0 %}
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                                {{ message_count }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <ul class="dropdown-menu dropdown-menu-end p-0 shadow-lg" style="min-width: 350px; border: none; border-radius: 10px;">
+                                            <li class="dropdown-header bg-light py-3 px-4 border-bottom">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0 fw-bold">پیام‌ها</h6>
+                                                    <a href="#" class="text-primary small text-decoration-none">
+                                                        <i class="bi bi-envelope-open me-1"></i>
+                                                        مشاهده همه
+                                                    </a>
+                                                </div>
+                                            </li>
+                                            {% for message in messages %}
+                                            <li>
+                                                <a class="dropdown-item py-3 px-4 border-bottom {% if not message.is_read %}bg-light{% endif %}" href="#" style="transition: all 0.2s;">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="flex-shrink-0">
+                                                            <div class="rounded-circle p-2 bg-primary-subtle">
+                                                                <i class="bi bi-envelope-fill text-primary"></i>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex-grow-1 ms-3">
+                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                <h6 class="mb-1 fw-bold {% if not message.is_read %}text-primary{% endif %}">{{ message.subject }}</h6>
+                                                                <small class="text-muted">{{ message.created_at|date:"H:i" }}</small>
+                                                            </div>
+                                                            <p class="mb-0 text-muted small">{{ message.content|truncatewords:15 }}</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            {% empty %}
+                                            <li class="text-center py-4">
+                                                <div class="text-muted">
+                                                    <i class="bi bi-envelope-slash display-6 mb-2"></i>
+                                                    <p class="mb-0">هیچ پیامی موجود نیست</p>
+                                                </div>
+                                            </li>
+                                            {% endfor %}
+                                            <li class="dropdown-footer bg-light py-2 px-4 text-center">
+                                                <a href="#" class="text-primary small text-decoration-none">
+                                                    <i class="bi bi-arrow-down-circle me-1"></i>
+                                                    مشاهده پیام‌های قدیمی‌تر
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+
                                     <i class="bi bi-person-circle fs-4 me-2 text-primary"></i>
                                     <span class="me-3">خوش آمدید، {{ user.username }}</span>
                                     <a href="{% url 'app2:logout' %}" class="btn btn-outline-danger">

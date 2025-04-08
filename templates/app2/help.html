@@ -1,0 +1,166 @@
+{% extends 'app2/base.html' %}
+
+{% block title %}راهنما - پنل مدیریت مناقصات{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        راهنمای استفاده از سامانه
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Quick Start Guide -->
+                    <div class="mb-5">
+                        <h5 class="border-bottom pb-2">راهنمای سریع</h5>
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body text-center">
+                                        <div class="display-4 mb-3 text-primary">
+                                            <i class="bi bi-person-plus"></i>
+                                        </div>
+                                        <h6>۱. ثبت‌نام در سامانه</h6>
+                                        <p class="small text-muted">ایجاد حساب کاربری و تکمیل اطلاعات اولیه</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body text-center">
+                                        <div class="display-4 mb-3 text-primary">
+                                            <i class="bi bi-building"></i>
+                                        </div>
+                                        <h6>۲. تکمیل اطلاعات شرکت</h6>
+                                        <p class="small text-muted">وارد کردن اطلاعات و اسناد شرکت</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body text-center">
+                                        <div class="display-4 mb-3 text-primary">
+                                            <i class="bi bi-search"></i>
+                                        </div>
+                                        <h6>۳. جستجوی مناقصات</h6>
+                                        <p class="small text-muted">مشاهده و بررسی مناقصات فعال</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body text-center">
+                                        <div class="display-4 mb-3 text-primary">
+                                            <i class="bi bi-file-earmark-text"></i>
+                                        </div>
+                                        <h6>۴. ارسال پیشنهاد</h6>
+                                        <p class="small text-muted">تکمیل و ارسال مدارک و پیشنهاد قیمت</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Instructions -->
+                    <div class="mb-5">
+                        <h5 class="border-bottom pb-2">راهنمای تصویری</h5>
+                        <div class="accordion" id="helpAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#registerHelp">
+                                        نحوه ثبت‌نام و تکمیل پروفایل
+                                    </button>
+                                </h2>
+                                <div id="registerHelp" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                                    <div class="accordion-body">
+                                        <ol class="list-group list-group-numbered">
+                                            <li class="list-group-item">روی دکمه "ثبت‌نام" در بالای صفحه کلیک کنید</li>
+                                            <li class="list-group-item">فرم ثبت‌نام را با دقت تکمیل نمایید</li>
+                                            <li class="list-group-item">به بخش تنظیمات مراجعه کرده و اطلاعات شرکت را وارد کنید</li>
+                                            <li class="list-group-item">اسناد و مدارک مورد نیاز را آپلود نمایید</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tenderHelp">
+                                        نحوه شرکت در مناقصات
+                                    </button>
+                                </h2>
+                                <div id="tenderHelp" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                    <div class="accordion-body">
+                                        <ol class="list-group list-group-numbered">
+                                            <li class="list-group-item">از منوی اصلی وارد بخش "جستجوی مناقصات" شوید</li>
+                                            <li class="list-group-item">مناقصه مورد نظر خود را انتخاب کنید</li>
+                                            <li class="list-group-item">اسناد مناقصه را با دقت مطالعه کنید</li>
+                                            <li class="list-group-item">روی دکمه "ثبت درخواست" کلیک کرده و مراحل را تکمیل نمایید</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#documentsHelp">
+                                        نحوه آپلود اسناد
+                                    </button>
+                                </h2>
+                                <div id="documentsHelp" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                    <div class="accordion-body">
+                                        <ol class="list-group list-group-numbered">
+                                            <li class="list-group-item">اسناد را در فرمت‌های مجاز (PDF، JPG، PNG) آماده کنید</li>
+                                            <li class="list-group-item">حجم هر فایل نباید از 10 مگابایت بیشتر باشد</li>
+                                            <li class="list-group-item">نام فایل‌ها را به صورت مناسب انتخاب کنید</li>
+                                            <li class="list-group-item">از طریق دکمه "انتخاب فایل" اسناد را آپلود نمایید</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Support -->
+                    <div>
+                        <h5 class="border-bottom pb-2">نیاز به راهنمایی بیشتر؟</h5>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-telephone display-6 text-primary mb-3"></i>
+                                        <h6>تماس تلفنی</h6>
+                                        <p class="mb-0">۰۲۱-۱۲۳۴۵۶۷۸</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-envelope display-6 text-primary mb-3"></i>
+                                        <h6>ایمیل پشتیبانی</h6>
+                                        <p class="mb-0">support@example.com</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-chat-dots display-6 text-primary mb-3"></i>
+                                        <h6>چت آنلاین</h6>
+                                        <p class="mb-0">۲۴ ساعته، ۷ روز هفته</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
