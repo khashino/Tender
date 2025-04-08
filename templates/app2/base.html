@@ -90,6 +90,58 @@
             background: white;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+        .navbar-toggler {
+            border: none;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .navbar-toggler:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        .dropdown-toggle::after {
+            display: none;
+        }
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 0;
+            margin-top: 0.5rem;
+        }
+        .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            transition: all 0.2s;
+        }
+        .dropdown-item:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            padding: 0.25rem 0.5rem;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            background-color: #e74c3c;
+            color: white;
+        }
+        .nav-icon {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            transition: all 0.3s;
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+        .nav-icon:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--accent-color);
         }
         .btn {
             border-radius: 5px;
@@ -145,6 +197,7 @@
             <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
                 <div class="position-sticky">
                     <div class="text-center mb-4">
+                        <img src="{% static 'images/nak-logo.png' %}" alt="NAK Logo" class="img-fluid mb-3" style="max-width: 120px;">
                         <h4 class="text-white">پنل مناقصات</h4>
                     </div>
                     <ul class="nav flex-column">
@@ -205,126 +258,129 @@
 
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-                <nav class="navbar navbar-expand-lg navbar-light mb-4">
+                <nav class="navbar navbar-expand-lg navbar-light">
                     <div class="container-fluid">
-                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
+                        <div class="d-flex align-items-center">
+                            {% if user.is_authenticated %}
+                                <!-- Notifications Dropdown -->
+                                <div class="dropdown me-3">
+                                    <div class="position-relative" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-bell nav-icon"></i>
+                                        {% if notification_count > 0 %}
+                                        <span class="notification-badge">{{ notification_count }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <ul class="dropdown-menu dropdown-menu-end p-0 shadow-lg" style="min-width: 350px;">
+                                        <li class="dropdown-header bg-light py-3 px-4 border-bottom">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0 fw-bold">اعلانات</h6>
+                                                <a href="#" class="text-primary small text-decoration-none">
+                                                    <i class="bi bi-list-ul me-1"></i>
+                                                    مشاهده همه
+                                                </a>
+                                            </div>
+                                        </li>
+                                        {% for notification in notifications %}
+                                        <li>
+                                            <a class="dropdown-item py-3 px-4 border-bottom" href="#" style="transition: all 0.2s;">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="flex-shrink-0">
+                                                        <div class="rounded-circle p-2 bg-{{ notification.notification_type }}-subtle">
+                                                            <i class="bi bi-bell-fill text-{{ notification.notification_type }}"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-grow-1 ms-3">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <h6 class="mb-1 fw-bold">{{ notification.title }}</h6>
+                                                            <small class="text-muted">{{ notification.created_at|date:"H:i" }}</small>
+                                                        </div>
+                                                        <p class="mb-0 text-muted small">{{ notification.message|truncatewords:15 }}</p>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </li>
+                                        {% empty %}
+                                        <li class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="bi bi-bell-slash display-6 mb-2"></i>
+                                                <p class="mb-0">هیچ اعلانی موجود نیست</p>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                        <li class="dropdown-footer bg-light py-2 px-4 text-center">
+                                            <a href="#" class="text-primary small text-decoration-none">
+                                                <i class="bi bi-arrow-down-circle me-1"></i>
+                                                مشاهده اعلانات قدیمی‌تر
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Messages Dropdown -->
+                                <div class="dropdown me-3">
+                                    <div class="position-relative" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-envelope nav-icon"></i>
+                                        {% if message_count > 0 %}
+                                        <span class="notification-badge">{{ message_count }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <ul class="dropdown-menu dropdown-menu-end p-0 shadow-lg" style="min-width: 350px;">
+                                        <li class="dropdown-header bg-light py-3 px-4 border-bottom">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0 fw-bold">پیام‌ها</h6>
+                                                <a href="#" class="text-primary small text-decoration-none">
+                                                    <i class="bi bi-envelope-open me-1"></i>
+                                                    مشاهده همه
+                                                </a>
+                                            </div>
+                                        </li>
+                                        {% for message in messages %}
+                                        <li>
+                                            <a class="dropdown-item py-3 px-4 border-bottom {% if not message.is_read %}bg-light{% endif %}" href="#" style="transition: all 0.2s;">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="flex-shrink-0">
+                                                        <div class="rounded-circle p-2 bg-primary-subtle">
+                                                            <i class="bi bi-envelope-fill text-primary"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-grow-1 ms-3">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <h6 class="mb-1 fw-bold {% if not message.is_read %}text-primary{% endif %}">{{ message.subject }}</h6>
+                                                            <small class="text-muted">{{ message.created_at|date:"H:i" }}</small>
+                                                        </div>
+                                                        <p class="mb-0 text-muted small">{{ message.content|truncatewords:15 }}</p>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </li>
+                                        {% empty %}
+                                        <li class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="bi bi-envelope-slash display-6 mb-2"></i>
+                                                <p class="mb-0">هیچ پیامی موجود نیست</p>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                        <li class="dropdown-footer bg-light py-2 px-4 text-center">
+                                            <a href="#" class="text-primary small text-decoration-none">
+                                                <i class="bi bi-arrow-down-circle me-1"></i>
+                                                مشاهده پیام‌های قدیمی‌تر
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex align-items-center">
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar">
+                                <i class="bi bi-list fs-4"></i>
+                            </button>
+                        </div>
+
                         <div class="d-flex align-items-center">
                             {% if user.is_authenticated %}
                                 <div class="d-flex align-items-center">
-                                    <!-- Notifications Dropdown -->
-                                    <div class="dropdown me-3">
-                                        <div class="position-relative" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-bell fs-4 text-primary"></i>
-                                            {% if notification_count > 0 %}
-                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                                {{ notification_count }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                        <ul class="dropdown-menu dropdown-menu-end p-0 shadow-lg" style="min-width: 350px; border: none; border-radius: 10px;">
-                                            <li class="dropdown-header bg-light py-3 px-4 border-bottom">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="mb-0 fw-bold">اعلانات</h6>
-                                                    <a href="#" class="text-primary small text-decoration-none">
-                                                        <i class="bi bi-list-ul me-1"></i>
-                                                        مشاهده همه
-                                                    </a>
-                                                </div>
-                                            </li>
-                                            {% for notification in notifications %}
-                                            <li>
-                                                <a class="dropdown-item py-3 px-4 border-bottom" href="#" style="transition: all 0.2s;">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="flex-shrink-0">
-                                                            <div class="rounded-circle p-2 bg-{{ notification.notification_type }}-subtle">
-                                                                <i class="bi bi-bell-fill text-{{ notification.notification_type }}"></i>
-                                                            </div>
-                                                        </div>
-                                                        <div class="flex-grow-1 ms-3">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <h6 class="mb-1 fw-bold">{{ notification.title }}</h6>
-                                                                <small class="text-muted">{{ notification.created_at|date:"H:i" }}</small>
-                                                            </div>
-                                                            <p class="mb-0 text-muted small">{{ notification.message|truncatewords:15 }}</p>
-                                                        </div>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            {% empty %}
-                                            <li class="text-center py-4">
-                                                <div class="text-muted">
-                                                    <i class="bi bi-bell-slash display-6 mb-2"></i>
-                                                    <p class="mb-0">هیچ اعلانی موجود نیست</p>
-                                                </div>
-                                            </li>
-                                            {% endfor %}
-                                            <li class="dropdown-footer bg-light py-2 px-4 text-center">
-                                                <a href="#" class="text-primary small text-decoration-none">
-                                                    <i class="bi bi-arrow-down-circle me-1"></i>
-                                                    مشاهده اعلانات قدیمی‌تر
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-
-                                    <!-- Messages Dropdown -->
-                                    <div class="dropdown me-3">
-                                        <div class="position-relative" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-envelope fs-4 text-primary"></i>
-                                            {% if message_count > 0 %}
-                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                                {{ message_count }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                        <ul class="dropdown-menu dropdown-menu-end p-0 shadow-lg" style="min-width: 350px; border: none; border-radius: 10px;">
-                                            <li class="dropdown-header bg-light py-3 px-4 border-bottom">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="mb-0 fw-bold">پیام‌ها</h6>
-                                                    <a href="#" class="text-primary small text-decoration-none">
-                                                        <i class="bi bi-envelope-open me-1"></i>
-                                                        مشاهده همه
-                                                    </a>
-                                                </div>
-                                            </li>
-                                            {% for message in messages %}
-                                            <li>
-                                                <a class="dropdown-item py-3 px-4 border-bottom {% if not message.is_read %}bg-light{% endif %}" href="#" style="transition: all 0.2s;">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="flex-shrink-0">
-                                                            <div class="rounded-circle p-2 bg-primary-subtle">
-                                                                <i class="bi bi-envelope-fill text-primary"></i>
-                                                            </div>
-                                                        </div>
-                                                        <div class="flex-grow-1 ms-3">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <h6 class="mb-1 fw-bold {% if not message.is_read %}text-primary{% endif %}">{{ message.subject }}</h6>
-                                                                <small class="text-muted">{{ message.created_at|date:"H:i" }}</small>
-                                                            </div>
-                                                            <p class="mb-0 text-muted small">{{ message.content|truncatewords:15 }}</p>
-                                                        </div>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            {% empty %}
-                                            <li class="text-center py-4">
-                                                <div class="text-muted">
-                                                    <i class="bi bi-envelope-slash display-6 mb-2"></i>
-                                                    <p class="mb-0">هیچ پیامی موجود نیست</p>
-                                                </div>
-                                            </li>
-                                            {% endfor %}
-                                            <li class="dropdown-footer bg-light py-2 px-4 text-center">
-                                                <a href="#" class="text-primary small text-decoration-none">
-                                                    <i class="bi bi-arrow-down-circle me-1"></i>
-                                                    مشاهده پیام‌های قدیمی‌تر
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-
                                     <i class="bi bi-person-circle fs-4 me-2 text-primary"></i>
                                     <span class="me-3">خوش آمدید، {{ user.username }}</span>
                                     <a href="{% url 'app2:logout' %}" class="btn btn-outline-danger">
