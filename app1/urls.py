@@ -28,4 +28,8 @@ urlpatterns = [
     path('controls/notifications/create/', views.notification_create, name='notification_create'),
     path('controls/notifications/<int:notification_id>/toggle/', views.notification_toggle, name='notification_toggle'),
     path('controls/notifications/<int:notification_id>/delete/', views.notification_delete, name='notification_delete'),
+    
+    # Participant Management
+    path('controls/participants/', views.participant_management, name='participant_management'),
+    path('controls/company/<int:company_id>/details/', views.company_details, name='company_details'),
 ] 

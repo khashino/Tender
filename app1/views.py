@@ -6,7 +6,7 @@ from .models import App1User, Role, UserRole
 from .forms import App1UserCreationForm, App1AuthenticationForm
 from .auth_backend import App1AuthBackend
 from django.contrib.auth.decorators import login_required, permission_required
-from app2.models import Company, CompanyDocument, Notification
+from app2.models import Company, CompanyDocument, Notification, App2User
 from django.contrib.auth.models import Permission
 from django.db.models import Q
 from django.utils import timezone
@@ -17,6 +17,7 @@ from app1.models import TenderApplicationProcess
 from app1.flows import TenderApplicationFlow
 from django.db import models
 from viewflow.workflow.models import Task
+from django.http import JsonResponse
 
 def home(request):
     if request.user.is_authenticated and not isinstance(request.user, App1User):
@@ -354,5 +355,31 @@ def notification_delete(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id)
     notification.delete()
     messages.success(request, 'نوتیفیکیشن با موفقیت حذف شد.')
-    return redirect('app1:notification_list') 
+    return redirect('app1:notification_list')
+
+@login_required
+@permission_required('app2.view_app2user', raise_exception=True)
+def participant_management(request):
+    # Get all companies with their users and tender application counts
+    companies = Company.objects.select_related('user').all()
+    
+    # Annotate each company with their tender application count
+    for company in companies:
+        company.tender_count = TenderApplication.objects.filter(applicant=company).count()
+    
+    context = {
+        'companies': companies,
+    }
+    return render(request, 'app1/controls/participant_management.html', context)
+
+@login_required
+@permission_required('app2.view_company', raise_exception=True)
+def company_details(request, company_id):
+    company = get_object_or_404(Company, id=company_id)
+    context = {
+        'company': company,
+        'documents': company.documents.all(),
+        'tender_count': TenderApplication.objects.filter(applicant=company).count(),
+    }
+    return render(request, 'app1/controls/company_details.html', context) 
        

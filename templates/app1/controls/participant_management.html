@@ -1,0 +1,131 @@
+{% extends 'app1/base.html' %}
+{% load static %}
+
+{% block title %}مدیریت شرکت‌کنندگان{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0">مدیریت شرکت‌کنندگان</h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>نام شرکت</th>
+                            <th>شماره ثبت</th>
+                            <th>کد اقتصادی</th>
+                            <th>شناسه ملی</th>
+                            <th>وضعیت تایید</th>
+                            <th>تعداد مناقصات</th>
+                            <th>اطلاعات تماس</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for company in companies %}
+                        <tr>
+                            <td>{{ company.name }}</td>
+                            <td>{{ company.registration_number }}</td>
+                            <td>{{ company.economic_code }}</td>
+                            <td>{{ company.national_id }}</td>
+                            <td>
+                                <span class="badge {% if company.is_verified %}bg-success{% else %}bg-warning{% endif %}">
+                                    {% if company.is_verified %}تایید شده{% else %}در انتظار تایید{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ company.tender_count }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <small><i class="bi bi-telephone me-1"></i>{{ company.phone }}</small>
+                                    <small><i class="bi bi-envelope me-1"></i>{{ company.user.email }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    {% if not company.is_verified %}
+                                    <a href="{% url 'app1:approve_company' company.id %}" class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-lg"></i>
+                                        تایید
+                                    </a>
+                                    <a href="{% url 'app1:reject_company' company.id %}" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-x-lg"></i>
+                                        رد
+                                    </a>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-info" onclick="showCompanyDetails({{ company.id }})">
+                                        <i class="bi bi-eye"></i>
+                                        جزئیات
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="bi bi-people display-6 mb-2"></i>
+                                    <p class="mb-0">هیچ شرکتی یافت نشد</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Company Details Modal -->
+<div class="modal fade" id="companyDetailsModal" tabindex="-1" aria-labelledby="companyDetailsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="companyDetailsLabel">جزئیات شرکت</h5>
+                <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="بستن"></button>
+            </div>
+            <div class="modal-body" id="companyDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function showCompanyDetails(companyId) {
+    // Create a new modal instance
+    const modal = new bootstrap.Modal(document.getElementById('companyDetailsModal'));
+    
+    // Update modal title and content
+    document.getElementById('companyDetailsLabel').textContent = 'جزئیات شرکت';
+    document.getElementById('companyDetailsContent').innerHTML = 'در حال بارگذاری...';
+    
+    // Show the modal
+    modal.show();
+    
+    // Load company details via AJAX
+    fetch(`/app1/controls/company/${companyId}/details/`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('companyDetailsContent').innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('companyDetailsContent').innerHTML = 'خطا در بارگذاری اطلاعات';
+            console.error('Error:', error);
+        });
+}
+</script>
+{% endblock %}
+{% endblock %} 
