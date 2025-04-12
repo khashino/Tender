@@ -1,0 +1,166 @@
+{% extends 'app2/base.html' %}
+{% load static %}
+{% load tender_filters %}
+
+{% block title %}پیشنهادات من{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">پیشنهادات من</h3>
+                        <a href="{% url 'app2:home' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            بازگشت به داشبورد
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>عنوان مناقصه</th>
+                                    <th>شماره مرجع</th>
+                                    <th>قیمت پیشنهادی</th>
+                                    <th>تاریخ ارسال</th>
+                                    <th>وضعیت</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for application in applications %}
+                                <tr>
+                                    <td>{{ application.tender.title }}</td>
+                                    <td>{{ application.tender.reference_number }}</td>
+                                    <td>{{ application.price_quote|default:"--" }} {{ application.tender.currency }}</td>
+                                    <td>{{ application.submitted_at|date:"Y/m/d" }}</td>
+                                    <td>
+                                        {% if application.status == 'pending' %}
+                                            <span class="badge bg-warning">در حال بررسی</span>
+                                        {% elif application.status == 'shortlisted' %}
+                                            <span class="badge bg-info">در لیست کوتاه</span>
+                                        {% elif application.status == 'accepted' %}
+                                            <span class="badge bg-success">پذیرفته شده</span>
+                                        {% elif application.status == 'rejected' %}
+                                            <span class="badge bg-danger">رد شده</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">نامشخص</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'app2:tender_detail' application.tender.id %}" class="btn btn-sm btn-primary" title="مشاهده جزئیات مناقصه">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#applicationModal{{ application.id }}" title="مشاهده جزئیات درخواست">
+                                                <i class="bi bi-info-circle"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">شما هنوز درخواستی برای مناقصه‌ای ثبت نکرده‌اید</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application Modals -->
+{% for application in applications %}
+<div class="modal fade" id="applicationModal{{ application.id }}" tabindex="-1" aria-labelledby="applicationModalLabel{{ application.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="applicationModalLabel{{ application.id }}">جزئیات درخواست</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6>مناقصه:</h6>
+                        <p>{{ application.tender.title }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>شماره مرجع:</h6>
+                        <p>{{ application.tender.reference_number }}</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6>وضعیت:</h6>
+                        <p>
+                            {% if application.status == 'pending' %}
+                                <span class="badge bg-warning">در حال بررسی</span>
+                            {% elif application.status == 'shortlisted' %}
+                                <span class="badge bg-info">در لیست کوتاه</span>
+                            {% elif application.status == 'accepted' %}
+                                <span class="badge bg-success">پذیرفته شده</span>
+                            {% elif application.status == 'rejected' %}
+                                <span class="badge bg-danger">رد شده</span>
+                            {% else %}
+                                <span class="badge bg-secondary">نامشخص</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>تاریخ ارسال:</h6>
+                        <p>{{ application.submitted_at|date:"Y/m/d H:i" }}</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6>قیمت پیشنهادی:</h6>
+                        <p>{{ application.price_quote|default:"--" }} {{ application.tender.currency }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>اسناد پیشنهاد:</h6>
+                        <p>
+                            <a href="{{ application.proposal_document.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-file-earmark-text me-1"></i> مشاهده سند پیشنهادی
+                            </a>
+                            {% if application.additional_document %}
+                            <a href="{{ application.additional_document.url }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-1">
+                                <i class="bi bi-file-earmark me-1"></i> مشاهده سند تکمیلی
+                            </a>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6>متن پیشنهاد:</h6>
+                        <p>{{ application.cover_letter }}</p>
+                    </div>
+                </div>
+                
+                {% if application.process and application.process.notes %}
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-primary">یادداشت‌های بررسی:</h6>
+                        <div class="alert alert-light">
+                            {{ application.process.notes }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %} 

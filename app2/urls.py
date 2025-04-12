@@ -15,6 +15,7 @@ urlpatterns = [
     path('download-document/<int:document_id>/', views.download_document, name='download_document'),
     path('tender/<int:tender_id>/', views.tender_detail, name='tender_detail'),
     path('tender/<int:tender_id>/apply/', views.apply_to_tender, name='apply_to_tender'),
+    path('my-applications/', views.my_applications, name='my_applications'),
     
     # New pages
     path('news-announcements/', views.news_announcements, name='news_announcements'),

@@ -216,6 +216,35 @@ def apply_to_tender(request, tender_id):
     }
     return render(request, 'app2/tender/apply_to_tender.html', context)
 
+@login_required
+def my_applications(request):
+    """View for 'پیشنهادات من' (My Proposals) to show user's tender applications and their status."""
+    # Get the company associated with the current user
+    try:
+        company = request.user.company
+        # Get all applications submitted by this company
+        applications = TenderApplication.objects.filter(applicant=company).order_by('-submitted_at')
+        
+        # Get associated process information if available
+        from app1.models import TenderApplicationProcess
+        
+        # Add process info to applications
+        for application in applications:
+            try:
+                process = TenderApplicationProcess.objects.filter(application=application).first()
+                application.process = process
+            except TenderApplicationProcess.DoesNotExist:
+                application.process = None
+        
+    except Exception as e:
+        messages.error(request, f'Error retrieving your applications: {str(e)}')
+        applications = []
+    
+    context = {
+        'applications': applications,
+    }
+    return render(request, 'app2/tender/my_applications.html', context)
+
 def news_announcements(request):
     announcements = Announcement.objects.filter(is_active=True).order_by('-created_at')
     latest_news = LatestNews.objects.filter(is_active=True).order_by('-created_at')
