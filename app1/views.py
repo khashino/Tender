@@ -18,6 +18,7 @@ from app1.flows import TenderApplicationFlow
 from django.db import models
 from viewflow.workflow.models import Task
 from django.http import JsonResponse
+from django.db import transaction
 
 def home(request):
     if request.user.is_authenticated and not isinstance(request.user, App1User):
@@ -249,38 +250,52 @@ def tender_applications(request):
     # Get workflow processes and tasks for each application
     for application in applications:
         try:
-            process = TenderApplicationProcess.objects.get(application=application)
-            application.process = process
+            # Use filter().first() instead of get() to handle multiple processes
+            process = TenderApplicationProcess.objects.filter(
+                application=application
+            ).order_by('-id').first()  # Get the most recent process
             
-            # Get current task
-            current_task = Task.objects.filter(
-                process=process,
-                status__in=['NEW', 'ASSIGNED', 'STARTED']
-            ).select_related('owner').first()
-            
-            if current_task:
-                application.current_task = current_task
-                application.current_step = current_task.flow_task.name
-                application.assigned_to = current_task.owner
-            else:
-                # Check if there are any completed tasks
-                last_task = Task.objects.filter(
-                    process=process,
-                    status='DONE'
-                ).select_related('owner').order_by('-finished').first()
+            if process:
+                application.process = process
                 
-                if last_task:
-                    application.current_step = "تکمیل شده"
-                    application.assigned_to = last_task.owner
+                # Get current task
+                current_task = Task.objects.filter(
+                    process=process,
+                    status__in=['NEW', 'ASSIGNED', 'STARTED']
+                ).select_related('owner').first()
+                
+                if current_task:
+                    application.current_task = current_task
+                    application.current_step = current_task.flow_task.name
+                    application.assigned_to = current_task.owner
                 else:
-                    application.current_step = "در انتظار شروع"
-                    application.assigned_to = None
+                    # Check if there are any completed tasks
+                    last_task = Task.objects.filter(
+                        process=process,
+                        status='DONE'
+                    ).select_related('owner').order_by('-finished').first()
+                    
+                    if last_task:
+                        application.current_step = "تکمیل شده"
+                        application.assigned_to = last_task.owner
+                    else:
+                        application.current_step = "در انتظار شروع"
+                        application.assigned_to = None
 
-            # Add workflow graph URL - using the correct URL pattern
-            application.workflow_graph_url = f"/vf/tender_application/tenderapplication/{process.id}/chart/"
-        except TenderApplicationProcess.DoesNotExist:
+                # Add workflow graph URL - using the correct URL pattern
+                application.workflow_graph_url = f"/vf/tender_application/tenderapplication/{process.id}/chart/"
+            else:
+                # No process found
+                application.process = None
+                application.current_step = "در انتظار شروع"
+                application.assigned_to = None
+                application.current_task = None
+                application.workflow_graph_url = None
+                
+        except Exception as e:
+            print(f"Error processing application {application.id}: {str(e)}")
             application.process = None
-            application.current_step = "در انتظار شروع"
+            application.current_step = "خطا در پردازش"
             application.assigned_to = None
             application.current_task = None
             application.workflow_graph_url = None
@@ -428,5 +443,325 @@ def company_details(request, company_id):
         'documents': company.documents.all(),
         'tender_count': TenderApplication.objects.filter(applicant=company).count(),
     }
-    return render(request, 'app1/controls/company_details.html', context) 
+    return render(request, 'app1/controls/company_details.html', context)
+
+@login_required
+def initial_review(request, application_id):
+    print("\n=== Initial Review Debug ===")
+    application = get_object_or_404(TenderApplication, id=application_id)
+    print(f"Application ID: {application.id}, Status: {application.status}")
+    
+    process = TenderApplicationProcess.objects.filter(application=application).first()
+    print(f"Process found: {process is not None}")
+    
+    if not process:
+        messages.error(request, 'No workflow process found for this application.')
+        return redirect('app1:tender_applications')
+    
+    # Get the current task - check for all active statuses
+    current_task = Task.objects.filter(
+        process=process,
+        status__in=['NEW', 'ASSIGNED', 'STARTED']
+    ).first()
+    
+    print(f"Current task found: {current_task is not None}")
+    if current_task:
+        print(f"Task status: {current_task.status}")
+        print(f"Task flow_task: {current_task.flow_task}")
+        print(f"Task flow_task name: {current_task.flow_task.name}")
+    
+    if not current_task or current_task.flow_task.name != 'review':
+        messages.error(request, 'This application is not in the initial review stage.')
+        return redirect('app1:tender_applications')
+    
+    if request.method == 'POST':
+        print("\nProcessing POST request...")
+        process.notes = request.POST.get('notes', '')
+        process.is_shortlisted = request.POST.get('is_shortlisted') == 'on'
+        process.is_rejected = request.POST.get('is_rejected') == 'on'
+        process.save()
+        print(f"Process updated - is_shortlisted: {process.is_shortlisted}, is_rejected: {process.is_rejected}")
+        
+        # Update application status based on the initial review decision
+        if process.is_rejected:
+            application.status = 'rejected'
+        elif process.is_shortlisted:
+            application.status = 'shortlisted'
+        else:
+            application.status = 'reviewed'
+        application.save()
+        print(f"Application status updated to: {application.status}")
+        
+        # Complete the task and activate the next task in the workflow
+        with transaction.atomic():
+            print("\nCompleting task using activation...")
+            
+            # Create a flow instance and import necessary classes
+            from viewflow.workflow.activation import Activation
+            from viewflow.workflow.flow import Flow, Function
+            
+            # Set the task as done
+            current_task.status = 'DONE'
+            current_task.finished = timezone.now()
+            current_task.owner = request.user  # Ensure the task has an owner
+            current_task.save()
+            print(f"Task marked as DONE at {current_task.finished}")
+            
+            # Now we need to advance the workflow by creating the next task
+            flow = TenderApplicationFlow()
+            
+            # Get the next node to process based on the flow definition
+            if process.is_shortlisted:
+                print("Activating path for shortlisted application...")
+                # Create a detailed_review task 
+                next_task = Task.objects.create(
+                    process=process,
+                    flow_task=flow.detailed_review,
+                    status='NEW',
+                    created=timezone.now()
+                )
+                # Set the previous task properly
+                next_task.previous.set([current_task])
+                print(f"Created next task: {next_task.flow_task.name}")
+            elif process.is_rejected:
+                print("Activating path for rejected application...")
+                # Create a notify_rejection task
+                next_task = Task.objects.create(
+                    process=process,
+                    flow_task=flow.notify_rejection,
+                    status='NEW', 
+                    created=timezone.now()
+                )
+                # Set the previous task properly
+                next_task.previous.set([current_task])
+                print(f"Created next task: {next_task.flow_task.name}")
+                
+                # If it's a function node, execute it immediately
+                if isinstance(next_task.flow_task, Function):
+                    print(f"Flow task type: {type(next_task.flow_task)}")
+                    try:
+                        # Get the activation and execute the function
+                        activation = next_task.flow_task.activation_class(next_task)
+                        activation.prepare()
+                        activation.execute()
+                        activation.done()
+                        next_task.status = 'DONE'
+                        next_task.finished = timezone.now()
+                        next_task.save()
+                        print("Function task executed automatically")
+                        
+                        # Create the end task after function completes
+                        end_task = Task.objects.create(
+                            process=process,
+                            flow_task=flow.end,
+                            status='DONE',
+                            created=timezone.now(),
+                            started=timezone.now(),
+                            finished=timezone.now()
+                        )
+                        end_task.previous.set([next_task])
+                        print("Created end task after function execution")
+                    except Exception as e:
+                        print(f"Error executing function: {str(e)}")
+            else:
+                print("Activating path to end the flow...")
+                # Create an end task 
+                next_task = Task.objects.create(
+                    process=process,
+                    flow_task=flow.end,
+                    status='DONE',
+                    created=timezone.now(),
+                    started=timezone.now(),
+                    finished=timezone.now()
+                )
+                # Set the previous task properly
+                next_task.previous.set([current_task])
+                print(f"Created end task: {next_task.flow_task.name}")
+        
+        messages.success(request, 'Initial review completed successfully.')
+        return redirect('app1:tender_applications')
+    
+    return render(request, 'app1/tender/initial_review.html', {
+        'application': application,
+        'process': process,
+        'form': {
+            'notes': {'value': process.notes},
+            'is_shortlisted': {'value': process.is_shortlisted},
+            'is_rejected': {'value': process.is_rejected}
+        }
+    })
+
+@login_required
+def detailed_review(request, application_id):
+    print("\n=== Detailed Review Debug ===")
+    application = get_object_or_404(TenderApplication, id=application_id)
+    print(f"Application ID: {application.id}, Status: {application.status}")
+    
+    process = TenderApplicationProcess.objects.filter(application=application).first()
+    print(f"Process found: {process is not None}")
+    
+    if not process:
+        messages.error(request, 'No workflow process found for this application.')
+        return redirect('app1:tender_applications')
+    
+    # Get the current task - check for all active statuses
+    current_task = Task.objects.filter(
+        process=process,
+        status__in=['NEW', 'ASSIGNED', 'STARTED']
+    ).first()
+    
+    print(f"Current task found: {current_task is not None}")
+    if current_task:
+        print(f"Task status: {current_task.status}")
+        print(f"Task flow_task: {current_task.flow_task}")
+        print(f"Task flow_task name: {current_task.flow_task.name}")
+    
+    if not current_task or current_task.flow_task.name != 'detailed_review':
+        messages.error(request, 'This application is not in the detailed review stage.')
+        return redirect('app1:tender_applications')
+    
+    if request.method == 'POST':
+        print("\nProcessing POST request...")
+        process.notes = request.POST.get('notes', '')
+        process.is_accepted = request.POST.get('is_accepted') == 'on'
+        process.is_rejected = request.POST.get('is_rejected') == 'on'
+        process.save()
+        print(f"Process updated - is_accepted: {process.is_accepted}, is_rejected: {process.is_rejected}")
+        
+        # Update application status based on the detailed review decision
+        if process.is_rejected:
+            application.status = 'rejected'
+        elif process.is_accepted:
+            application.status = 'accepted'
+        else:
+            application.status = 'reviewed'
+        application.save()
+        print(f"Application status updated to: {application.status}")
+        
+        # Complete the task and activate the next task in the workflow
+        with transaction.atomic():
+            print("\nCompleting task using activation...")
+            
+            # Create a flow instance and import necessary classes
+            from viewflow.workflow.activation import Activation
+            from viewflow.workflow.flow import Flow, Function
+            
+            # Set the task as done
+            current_task.status = 'DONE'
+            current_task.finished = timezone.now()
+            current_task.owner = request.user  # Ensure the task has an owner
+            current_task.save()
+            print(f"Task marked as DONE at {current_task.finished}")
+            
+            # Now we need to advance the workflow by creating the next task
+            flow = TenderApplicationFlow()
+            
+            # Get the next node to process based on the flow definition
+            if process.is_accepted:
+                print("Activating path for accepted application...")
+                # Create a notify_acceptance task
+                next_task = Task.objects.create(
+                    process=process,
+                    flow_task=flow.notify_acceptance,
+                    status='NEW',
+                    created=timezone.now()
+                )
+                # Set the previous task properly
+                next_task.previous.set([current_task])
+                print(f"Created next task: {next_task.flow_task.name}")
+                
+                # If it's a function node, execute it immediately
+                if isinstance(next_task.flow_task, Function):
+                    print(f"Flow task type: {type(next_task.flow_task)}")
+                    try:
+                        # Get the activation and execute the function
+                        activation = next_task.flow_task.activation_class(next_task)
+                        activation.prepare()
+                        activation.execute()
+                        activation.done()
+                        next_task.status = 'DONE'
+                        next_task.finished = timezone.now()
+                        next_task.save()
+                        print("Function task executed automatically")
+                        
+                        # Create the end task after function completes
+                        end_task = Task.objects.create(
+                            process=process,
+                            flow_task=flow.end,
+                            status='DONE',
+                            created=timezone.now(),
+                            started=timezone.now(),
+                            finished=timezone.now()
+                        )
+                        end_task.previous.set([next_task])
+                        print("Created end task after function execution")
+                    except Exception as e:
+                        print(f"Error executing function: {str(e)}")
+            elif process.is_rejected:
+                print("Activating path for rejected application...")
+                # Create a notify_rejection task
+                next_task = Task.objects.create(
+                    process=process,
+                    flow_task=flow.notify_rejection,
+                    status='NEW',
+                    created=timezone.now()
+                )
+                # Set the previous task properly
+                next_task.previous.set([current_task])
+                print(f"Created next task: {next_task.flow_task.name}")
+                
+                # If it's a function node, execute it immediately
+                if isinstance(next_task.flow_task, Function):
+                    print(f"Flow task type: {type(next_task.flow_task)}")
+                    try:
+                        # Get the activation and execute the function
+                        activation = next_task.flow_task.activation_class(next_task)
+                        activation.prepare()
+                        activation.execute()
+                        activation.done()
+                        next_task.status = 'DONE'
+                        next_task.finished = timezone.now()
+                        next_task.save()
+                        print("Function task executed automatically")
+                        
+                        # Create the end task after function completes
+                        end_task = Task.objects.create(
+                            process=process,
+                            flow_task=flow.end,
+                            status='DONE',
+                            created=timezone.now(),
+                            started=timezone.now(),
+                            finished=timezone.now()
+                        )
+                        end_task.previous.set([next_task])
+                        print("Created end task after function execution")
+                    except Exception as e:
+                        print(f"Error executing function: {str(e)}")
+            else:
+                print("Activating path to end the flow...")
+                # Create an end task
+                next_task = Task.objects.create(
+                    process=process,
+                    flow_task=flow.end,
+                    status='DONE',
+                    created=timezone.now(),
+                    started=timezone.now(),
+                    finished=timezone.now()
+                )
+                # Set the previous task properly
+                next_task.previous.set([current_task])
+                print(f"Created end task: {next_task.flow_task.name}")
+        
+        messages.success(request, 'Detailed review completed successfully.')
+        return redirect('app1:tender_applications')
+    
+    return render(request, 'app1/tender/detailed_review.html', {
+        'application': application,
+        'process': process,
+        'form': {
+            'notes': {'value': process.notes},
+            'is_accepted': {'value': process.is_accepted},
+            'is_rejected': {'value': process.is_rejected}
+        }
+    }) 
        

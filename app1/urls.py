@@ -25,6 +25,10 @@ urlpatterns = [
     path('tender/applications/<int:application_id>/review/', views.review_application, name='review_application'),
     path('tender/applications/<int:application_id>/start-workflow/', views.start_application_workflow, name='start_application_workflow'),
     
+    # Workflow Steps
+    path('tender/applications/<int:application_id>/initial-review/', views.initial_review, name='initial_review'),
+    path('tender/applications/<int:application_id>/detailed-review/', views.detailed_review, name='detailed_review'),
+    
     # Notification Management
     path('controls/notifications/', views.notification_list, name='notification_list'),
     path('controls/notifications/create/', views.notification_create, name='notification_create'),

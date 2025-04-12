@@ -101,6 +101,25 @@
                                         شروع فرآیند
                                     </a>
                                     {% endif %}
+                                    
+                                    {# Add workflow step buttons #}
+                                    {% if application.current_task %}
+                                        {% if application.current_step == 'review' %}
+                                        <a href="{% url 'app1:initial_review' application.id %}" 
+                                           class="btn btn-sm btn-warning">
+                                            <i class="bi bi-clipboard-check"></i>
+                                            بررسی اولیه
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% if application.current_step == 'detailed_review' %}
+                                        <a href="{% url 'app1:detailed_review' application.id %}" 
+                                           class="btn btn-sm btn-warning">
+                                            <i class="bi bi-clipboard-check"></i>
+                                            بررسی تفصیلی
+                                        </a>
+                                        {% endif %}
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
