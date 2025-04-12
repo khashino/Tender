@@ -536,19 +536,19 @@ def initial_review(request, application_id):
                 next_task.previous.set([current_task])
                 print(f"Created next task: {next_task.flow_task.name}")
                 
-                # If it's a function node, execute it immediately
+                # If it's a function node, execute it directly
                 if isinstance(next_task.flow_task, Function):
                     print(f"Flow task type: {type(next_task.flow_task)}")
                     try:
-                        # Get the activation and execute the function
-                        activation = next_task.flow_task.activation_class(next_task)
-                        activation.prepare()
-                        activation.execute()
-                        activation.done()
+                        # Execute the function directly
+                        print("Executing rejection notification function directly...")
+                        flow.send_rejection_notification(next_task.flow_task.activation_class(next_task))
+                        
+                        # Mark the task as done
                         next_task.status = 'DONE'
                         next_task.finished = timezone.now()
                         next_task.save()
-                        print("Function task executed automatically")
+                        print("Function task completed successfully")
                         
                         # Create the end task after function completes
                         end_task = Task.objects.create(
@@ -562,7 +562,7 @@ def initial_review(request, application_id):
                         end_task.previous.set([next_task])
                         print("Created end task after function execution")
                     except Exception as e:
-                        print(f"Error executing function: {str(e)}")
+                        print(f"Error executing rejection function: {str(e)}")
             else:
                 print("Activating path to end the flow...")
                 # Create an end task 
@@ -670,19 +670,19 @@ def detailed_review(request, application_id):
                 next_task.previous.set([current_task])
                 print(f"Created next task: {next_task.flow_task.name}")
                 
-                # If it's a function node, execute it immediately
+                # If it's a function node, execute it directly
                 if isinstance(next_task.flow_task, Function):
                     print(f"Flow task type: {type(next_task.flow_task)}")
                     try:
-                        # Get the activation and execute the function
-                        activation = next_task.flow_task.activation_class(next_task)
-                        activation.prepare()
-                        activation.execute()
-                        activation.done()
+                        # Execute the function directly
+                        print("Executing acceptance notification function directly...")
+                        flow.send_acceptance_notification(next_task.flow_task.activation_class(next_task))
+                        
+                        # Mark the task as done
                         next_task.status = 'DONE'
                         next_task.finished = timezone.now()
                         next_task.save()
-                        print("Function task executed automatically")
+                        print("Function task completed successfully")
                         
                         # Create the end task after function completes
                         end_task = Task.objects.create(
@@ -696,7 +696,7 @@ def detailed_review(request, application_id):
                         end_task.previous.set([next_task])
                         print("Created end task after function execution")
                     except Exception as e:
-                        print(f"Error executing function: {str(e)}")
+                        print(f"Error executing acceptance function: {str(e)}")
             elif process.is_rejected:
                 print("Activating path for rejected application...")
                 # Create a notify_rejection task
@@ -710,19 +710,19 @@ def detailed_review(request, application_id):
                 next_task.previous.set([current_task])
                 print(f"Created next task: {next_task.flow_task.name}")
                 
-                # If it's a function node, execute it immediately
+                # If it's a function node, execute it directly
                 if isinstance(next_task.flow_task, Function):
                     print(f"Flow task type: {type(next_task.flow_task)}")
                     try:
-                        # Get the activation and execute the function
-                        activation = next_task.flow_task.activation_class(next_task)
-                        activation.prepare()
-                        activation.execute()
-                        activation.done()
+                        # Execute the function directly
+                        print("Executing rejection notification function directly...")
+                        flow.send_rejection_notification(next_task.flow_task.activation_class(next_task))
+                        
+                        # Mark the task as done
                         next_task.status = 'DONE'
                         next_task.finished = timezone.now()
                         next_task.save()
-                        print("Function task executed automatically")
+                        print("Function task completed successfully")
                         
                         # Create the end task after function completes
                         end_task = Task.objects.create(
@@ -736,7 +736,7 @@ def detailed_review(request, application_id):
                         end_task.previous.set([next_task])
                         print("Created end task after function execution")
                     except Exception as e:
-                        print(f"Error executing function: {str(e)}")
+                        print(f"Error executing rejection function: {str(e)}")
             else:
                 print("Activating path to end the flow...")
                 # Create an end task

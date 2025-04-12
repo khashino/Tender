@@ -89,7 +89,20 @@ class TenderApplicationFlow(flow.Flow):
             application.status = 'accepted'
             application.save()
             
-
+            # Create a notification for the applicant
+            try:
+                from app2.models import Message
+                
+                # Create a notification for the applicant using the correct parameters
+                # Message model expects: receiver, subject, content fields
+                Message.objects.create(
+                    receiver=application.applicant.user,
+                    subject="Tender Application Accepted",
+                    content=f"Your application for '{application.tender.title}' has been accepted!"
+                )
+                print(f"Acceptance notification created for user {application.applicant.user.username}")
+            except Exception as e:
+                print(f"Error creating acceptance notification: {str(e)}")
 
     def send_rejection_notification(self, activation):
         application = activation.process.application
@@ -97,4 +110,19 @@ class TenderApplicationFlow(flow.Flow):
             # Update the application status
             application.status = 'rejected'
             application.save()
+            
+            # Create a notification for the applicant
+            try:
+                from app2.models import Message
+                
+                # Create a notification for the applicant using the correct parameters
+                # Message model expects: receiver, subject, content fields
+                Message.objects.create(
+                    receiver=application.applicant.user,
+                    subject="Tender Application Rejected",
+                    content=f"Your application for '{application.tender.title}' has been rejected."
+                )
+                print(f"Rejection notification created for user {application.applicant.user.username}")
+            except Exception as e:
+                print(f"Error creating rejection notification: {str(e)}")
            
