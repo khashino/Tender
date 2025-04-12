@@ -275,11 +275,15 @@ def tender_applications(request):
                 else:
                     application.current_step = "در انتظار شروع"
                     application.assigned_to = None
+
+            # Add workflow graph URL - using the correct URL pattern
+            application.workflow_graph_url = f"/vf/tender_application/tenderapplication/{process.id}/chart/"
         except TenderApplicationProcess.DoesNotExist:
             application.process = None
             application.current_step = "در انتظار شروع"
             application.assigned_to = None
             application.current_task = None
+            application.workflow_graph_url = None
 
     context = {
         'applications': applications,
