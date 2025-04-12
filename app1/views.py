@@ -237,7 +237,50 @@ def create_tender(request):
 
 @login_required
 def tender_applications(request):
-    applications = TenderApplication.objects.all().order_by('-submitted_at')
+    # Get all applications with related workflow information
+    applications = TenderApplication.objects.select_related(
+        'applicant',
+        'applicant__user',
+        'tender'
+    ).prefetch_related(
+        'applicant__documents'
+    ).all().order_by('-submitted_at')
+
+    # Get workflow processes and tasks for each application
+    for application in applications:
+        try:
+            process = TenderApplicationProcess.objects.get(application=application)
+            application.process = process
+            
+            # Get current task
+            current_task = Task.objects.filter(
+                process=process,
+                status__in=['NEW', 'ASSIGNED', 'STARTED']
+            ).select_related('owner').first()
+            
+            if current_task:
+                application.current_task = current_task
+                application.current_step = current_task.flow_task.name
+                application.assigned_to = current_task.owner
+            else:
+                # Check if there are any completed tasks
+                last_task = Task.objects.filter(
+                    process=process,
+                    status='DONE'
+                ).select_related('owner').order_by('-finished').first()
+                
+                if last_task:
+                    application.current_step = "تکمیل شده"
+                    application.assigned_to = last_task.owner
+                else:
+                    application.current_step = "در انتظار شروع"
+                    application.assigned_to = None
+        except TenderApplicationProcess.DoesNotExist:
+            application.process = None
+            application.current_step = "در انتظار شروع"
+            application.assigned_to = None
+            application.current_task = None
+
     context = {
         'applications': applications,
     }

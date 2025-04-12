@@ -17,6 +17,8 @@ urlpatterns = [
     path('roles/<int:role_id>/delete/', views.role_delete, name='role_delete'),
     path('user-roles/', views.user_roles, name='user_roles'),
     path('user-roles/<int:user_id>/assign/', views.assign_user_roles, name='assign_user_roles'),
+
+    # Tender Management
     path('tender/create/', views.create_tender, name='create_tender'),
     path('tender/list/', views.tender_list, name='tender_list'),
     path('tender/applications/', views.tender_applications, name='tender_applications'),
