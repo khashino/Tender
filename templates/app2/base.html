@@ -234,7 +234,7 @@
                         
                         {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'tender_list' %}active{% endif %}" href="#">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'tender_list' %}active{% endif %}" href="{% url 'app2:tender_list' %}">
                                 <i class="bi bi-search"></i>
                                 جستجوی مناقصات
                             </a>

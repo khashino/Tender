@@ -303,5 +303,13 @@ def start_application_workflow(request, application_id):
     
     except TenderApplication.DoesNotExist:
         messages.error(request, "Application not found.")
-        return redirect('app1:tender_applications') 
+        return redirect('app1:tender_applications')
+
+@login_required
+def tender_list(request):
+    tenders = Tender.objects.all().order_by('-published_date')
+    context = {
+        'tenders': tenders,
+    }
+    return render(request, 'app1/tender/tender_list.html', context) 
        
