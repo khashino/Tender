@@ -22,4 +22,10 @@ urlpatterns = [
     path('tender/applications/', views.tender_applications, name='tender_applications'),
     path('tender/applications/<int:application_id>/review/', views.review_application, name='review_application'),
     path('tender/applications/<int:application_id>/start-workflow/', views.start_application_workflow, name='start_application_workflow'),
+    
+    # Notification Management
+    path('controls/notifications/', views.notification_list, name='notification_list'),
+    path('controls/notifications/create/', views.notification_create, name='notification_create'),
+    path('controls/notifications/<int:notification_id>/toggle/', views.notification_toggle, name='notification_toggle'),
+    path('controls/notifications/<int:notification_id>/delete/', views.notification_delete, name='notification_delete'),
 ] 

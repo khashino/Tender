@@ -6,7 +6,7 @@ from .models import App1User, Role, UserRole
 from .forms import App1UserCreationForm, App1AuthenticationForm
 from .auth_backend import App1AuthBackend
 from django.contrib.auth.decorators import login_required, permission_required
-from app2.models import Company, CompanyDocument
+from app2.models import Company, CompanyDocument, Notification
 from django.contrib.auth.models import Permission
 from django.db.models import Q
 from django.utils import timezone
@@ -311,5 +311,48 @@ def tender_list(request):
     context = {
         'tenders': tenders,
     }
-    return render(request, 'app1/tender/tender_list.html', context) 
+    return render(request, 'app1/tender/tender_list.html', context)
+
+@login_required
+@permission_required('app2.view_notification', raise_exception=True)
+def notification_list(request):
+    notifications = Notification.objects.all().order_by('-created_at')
+    return render(request, 'app1/controls/notification_list.html', {'notifications': notifications})
+
+@login_required
+@permission_required('app2.add_notification', raise_exception=True)
+def notification_create(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        message = request.POST.get('message')
+        notification_type = request.POST.get('notification_type')
+        
+        Notification.objects.create(
+            title=title,
+            message=message,
+            notification_type=notification_type
+        )
+        messages.success(request, 'نوتیفیکیشن با موفقیت ایجاد شد.')
+        return redirect('app1:notification_list')
+    
+    return render(request, 'app1/controls/notification_create.html')
+
+@login_required
+@permission_required('app2.change_notification', raise_exception=True)
+def notification_toggle(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id)
+    notification.is_active = not notification.is_active
+    notification.save()
+    
+    status = 'فعال' if notification.is_active else 'غیرفعال'
+    messages.success(request, f'وضعیت نوتیفیکیشن به {status} تغییر یافت.')
+    return redirect('app1:notification_list')
+
+@login_required
+@permission_required('app2.delete_notification', raise_exception=True)
+def notification_delete(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id)
+    notification.delete()
+    messages.success(request, 'نوتیفیکیشن با موفقیت حذف شد.')
+    return redirect('app1:notification_list') 
        
