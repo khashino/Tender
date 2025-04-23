@@ -239,3 +239,91 @@ class TenderApplicationProcess(Process):
     class Meta:
         verbose_name = "Tender Application Process"
         verbose_name_plural = "Tender Application Processes"    
+
+class FlowTemplate(models.Model):
+    FLOW_TYPES = [
+        ('tender', 'جریان کار مناقصه'),
+        ('purchase', 'جریان کار خرید'),
+        ('approval', 'جریان کار تایید'),
+        ('custom', 'جریان کار سفارشی'),
+    ]
+    
+    name = models.CharField(max_length=100, verbose_name='نام جریان کار')
+    description = models.TextField(blank=True, verbose_name='توضیحات')
+    flow_type = models.CharField(max_length=20, choices=FLOW_TYPES, default='custom', verbose_name='نوع جریان کار')
+    app_name = models.CharField(max_length=50, verbose_name='نام برنامه', help_text='نام برنامه برای استفاده در viewflow')
+    process_class = models.CharField(max_length=100, verbose_name='کلاس فرآیند', help_text='نام کلاس فرآیند در models.py')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    code_generated = models.BooleanField(default=False, verbose_name='کد تولید شده')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(App1User, on_delete=models.SET_NULL, null=True, related_name='created_flows')
+
+    class Meta:
+        verbose_name = 'قالب جریان کار'
+        verbose_name_plural = 'قالب‌های جریان کار'
+        permissions = [
+            ('create_flow_template', 'Can create flow template'),
+            ('edit_flow_template', 'Can edit flow template'),
+            ('view_flow_template', 'Can view flow template'),
+            ('delete_flow_template', 'Can delete flow template'),
+            ('generate_flow_code', 'Can generate flow code'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+class FlowStep(models.Model):
+    STEP_TYPES = [
+        ('start', 'شروع'),
+        ('end', 'پایان'),
+        ('view', 'نمایش فرم'),
+        ('function', 'اجرای تابع'),
+        ('if', 'شرط'),
+        ('split', 'انشعاب'),
+        ('join', 'اتصال'),
+    ]
+    
+    CONDITION_TYPES = [
+        ('field_check', 'بررسی مقدار فیلد'),
+        ('python_code', 'کد پایتون'),
+    ]
+    
+    flow_template = models.ForeignKey(FlowTemplate, on_delete=models.CASCADE, related_name='steps', verbose_name='قالب جریان کار')
+    name = models.CharField(max_length=100, verbose_name='نام مرحله')
+    step_type = models.CharField(max_length=20, choices=STEP_TYPES, verbose_name='نوع مرحله')
+    position = models.PositiveIntegerField(default=0, verbose_name='ترتیب')
+    
+    # For view steps
+    view_class = models.CharField(max_length=100, blank=True, null=True, verbose_name='کلاس نمایش')
+    view_fields = models.TextField(blank=True, null=True, verbose_name='فیلدهای فرم (با کاما جدا شود)')
+    
+    # For function steps
+    function_name = models.CharField(max_length=100, blank=True, null=True, verbose_name='نام تابع')
+    
+    # For if steps
+    condition_type = models.CharField(max_length=20, choices=CONDITION_TYPES, blank=True, null=True, verbose_name='نوع شرط')
+    condition_field = models.CharField(max_length=100, blank=True, null=True, verbose_name='فیلد شرط')
+    condition_value = models.CharField(max_length=100, blank=True, null=True, verbose_name='مقدار شرط')
+    condition_code = models.TextField(blank=True, null=True, verbose_name='کد شرط')
+    
+    # Permissions
+    permissions = models.CharField(max_length=255, blank=True, null=True, verbose_name='دسترسی‌ها (با کاما جدا شود)')
+    auto_create_permission = models.BooleanField(default=True, verbose_name='ایجاد خودکار دسترسی')
+    
+    # For connections between steps
+    next_step = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_steps', verbose_name='مرحله بعدی')
+    branch_true = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='if_true_source', verbose_name='مرحله بعدی در صورت درست بودن شرط')
+    branch_false = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='if_false_source', verbose_name='مرحله بعدی در صورت نادرست بودن شرط')
+    
+    # Display settings for the flow designer
+    x_coord = models.IntegerField(default=0, verbose_name='موقعیت X')
+    y_coord = models.IntegerField(default=0, verbose_name='موقعیت Y')
+    
+    class Meta:
+        verbose_name = 'مرحله جریان کار'
+        verbose_name_plural = 'مراحل جریان کار'
+        ordering = ['flow_template', 'position']
+
+    def __str__(self):
+        return f"{self.flow_template.name} - {self.name}"    

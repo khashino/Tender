@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
-from .models import App1User, Role, UserRole
+from .models import App1User, Role, UserRole, FlowTemplate, FlowStep, TenderApplicationProcess
 from .forms import App1UserCreationForm, App1AuthenticationForm
 from .auth_backend import App1AuthBackend
 from django.contrib.auth.decorators import login_required, permission_required
@@ -13,7 +13,6 @@ from django.utils import timezone
 from shared_models.models import TenderApplication, Tender
 from django.core.files.storage import FileSystemStorage
 import os
-from app1.models import TenderApplicationProcess
 from app1.flows import TenderApplicationFlow
 from django.db import models
 from viewflow.workflow.models import Task
@@ -763,5 +762,477 @@ def detailed_review(request, application_id):
             'is_accepted': {'value': process.is_accepted},
             'is_rejected': {'value': process.is_rejected}
         }
-    }) 
+    })
+
+@login_required
+@permission_required('app1.view_flow_template', raise_exception=True)
+def flow_template_list(request):
+    """View all flow templates"""
+    templates = FlowTemplate.objects.all().order_by('-updated_at')
+    return render(request, 'app1/flowdesigner/template_list.html', {'templates': templates})
+
+@login_required
+@permission_required('app1.create_flow_template', raise_exception=True)
+def flow_template_create(request):
+    """Create a new flow template"""
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        flow_type = request.POST.get('flow_type')
+        app_name = request.POST.get('app_name')
+        process_class = request.POST.get('process_class')
+        
+        template = FlowTemplate.objects.create(
+            name=name,
+            description=description,
+            flow_type=flow_type,
+            app_name=app_name,
+            process_class=process_class,
+            created_by=request.user
+        )
+        
+        # Create default Start and End steps
+        start_step = FlowStep.objects.create(
+            flow_template=template,
+            name='start',
+            step_type='start',
+            position=1,
+            x_coord=100,
+            y_coord=100
+        )
+        
+        end_step = FlowStep.objects.create(
+            flow_template=template,
+            name='end',
+            step_type='end',
+            position=999,
+            x_coord=500,
+            y_coord=100
+        )
+        
+        messages.success(request, 'قالب جریان کار با موفقیت ایجاد شد.')
+        return redirect('app1:flow_designer', template_id=template.id)
+    
+    return render(request, 'app1/flowdesigner/template_create.html')
+
+@login_required
+@permission_required('app1.view_flow_template', raise_exception=True)
+def flow_designer(request, template_id):
+    """Flow designer interface for a specific template"""
+    template = get_object_or_404(FlowTemplate, id=template_id)
+    steps = FlowStep.objects.filter(flow_template=template).order_by('position')
+    
+    # Get available view classes from ViewFlow
+    view_classes = [
+        'views.CreateProcessView',
+        'views.UpdateProcessView',
+        'views.DetailProcessView',
+    ]
+    
+    # Get process model fields for selection
+    process_fields = []
+    try:
+        from django.apps import apps
+        model_path = template.process_class.split('.')
+        if len(model_path) > 1:
+            app_label, model_name = model_path[0], model_path[-1]
+            model = apps.get_model(app_label, model_name)
+            for field in model._meta.get_fields():
+                if hasattr(field, 'name') and not field.name.startswith('_'):
+                    process_fields.append(field.name)
+        else:
+            # Try to find any local model matching the name
+            for model in apps.get_models():
+                if model.__name__ == template.process_class:
+                    for field in model._meta.get_fields():
+                        if hasattr(field, 'name') and not field.name.startswith('_'):
+                            process_fields.append(field.name)
+    except Exception as e:
+        messages.warning(request, f'Unable to load process fields: {str(e)}')
+    
+    context = {
+        'template': template,
+        'steps': steps,
+        'view_classes': view_classes,
+        'process_fields': process_fields,
+    }
+    
+    return render(request, 'app1/flowdesigner/flow_designer.html', context)
+
+@login_required
+@permission_required('app1.edit_flow_template', raise_exception=True)
+def flow_step_create(request, template_id):
+    """Create a new step in the flow template"""
+    template = get_object_or_404(FlowTemplate, id=template_id)
+    
+    if request.method == 'POST':
+        # Get form data
+        name = request.POST.get('name')
+        step_type = request.POST.get('step_type')
+        
+        # Convert coordinates to integers with default values
+        try:
+            x_coord = int(request.POST.get('x_coord', 200))
+        except (ValueError, TypeError):
+            x_coord = 200
+            
+        try:
+            y_coord = int(request.POST.get('y_coord', 200))
+        except (ValueError, TypeError):
+            y_coord = 200
+        
+        # Validate required fields
+        if not name or not step_type:
+            return JsonResponse({'success': False, 'error': 'Name and step type are required'})
+        
+        # Get the maximum position and add 1
+        max_position = FlowStep.objects.filter(flow_template=template).aggregate(models.Max('position'))['position__max'] or 0
+        
+        # Create the step
+        try:
+            step = FlowStep.objects.create(
+                flow_template=template,
+                name=name,
+                step_type=step_type,
+                position=max_position + 1,
+                x_coord=x_coord,
+                y_coord=y_coord
+            )
+            
+            # Additional fields based on step type
+            if step_type == 'view':
+                step.view_class = request.POST.get('view_class')
+                step.view_fields = request.POST.get('view_fields')
+                step.auto_create_permission = request.POST.get('auto_create_permission') == 'on'
+                step.save()
+            
+            elif step_type == 'function':
+                step.function_name = request.POST.get('function_name')
+                step.save()
+            
+            elif step_type == 'if':
+                step.condition_type = request.POST.get('condition_type')
+                if step.condition_type == 'field_check':
+                    step.condition_field = request.POST.get('condition_field')
+                    step.condition_value = request.POST.get('condition_value')
+                else:
+                    step.condition_code = request.POST.get('condition_code')
+                step.save()
+            
+            return JsonResponse({'success': True, 'step_id': step.id})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@permission_required('app1.edit_flow_template', raise_exception=True)
+def flow_step_update(request, step_id):
+    """Update a flow step"""
+    step = get_object_or_404(FlowStep, id=step_id)
+    
+    if request.method == 'POST':
+        # Update basic info
+        step.name = request.POST.get('name', step.name)
+        
+        # Update position
+        if 'x_coord' in request.POST and 'y_coord' in request.POST:
+            step.x_coord = request.POST.get('x_coord')
+            step.y_coord = request.POST.get('y_coord')
+        
+        # Update specific fields based on step type
+        if step.step_type == 'view':
+            step.view_class = request.POST.get('view_class', step.view_class)
+            step.view_fields = request.POST.get('view_fields', step.view_fields)
+            step.auto_create_permission = request.POST.get('auto_create_permission') == 'on'
+        
+        elif step.step_type == 'function':
+            step.function_name = request.POST.get('function_name', step.function_name)
+        
+        elif step.step_type == 'if':
+            step.condition_type = request.POST.get('condition_type', step.condition_type)
+            if step.condition_type == 'field_check':
+                step.condition_field = request.POST.get('condition_field', step.condition_field)
+                step.condition_value = request.POST.get('condition_value', step.condition_value)
+            else:
+                step.condition_code = request.POST.get('condition_code', step.condition_code)
+        
+        step.save()
+        return JsonResponse({'success': True})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@permission_required('app1.edit_flow_template', raise_exception=True)
+def flow_step_delete(request, step_id):
+    """Delete a flow step"""
+    step = get_object_or_404(FlowStep, id=step_id)
+    
+    # Prevent deleting the start or end steps
+    if step.step_type in ['start', 'end']:
+        return JsonResponse({'success': False, 'error': 'Cannot delete start or end steps'})
+    
+    # Delete the step
+    step.delete()
+    
+    return JsonResponse({'success': True})
+
+@login_required
+@permission_required('app1.edit_flow_template', raise_exception=True)
+def flow_connection_update(request):
+    """Update connections between steps"""
+    if request.method == 'POST':
+        source_id = request.POST.get('source_id')
+        target_id = request.POST.get('target_id')
+        connection_type = request.POST.get('connection_type', 'next')
+        
+        source = get_object_or_404(FlowStep, id=source_id)
+        target = get_object_or_404(FlowStep, id=target_id)
+        
+        # Prevent connecting to start or from end
+        if target.step_type == 'start':
+            return JsonResponse({'success': False, 'error': 'Cannot connect to start step'})
+        
+        if source.step_type == 'end':
+            return JsonResponse({'success': False, 'error': 'Cannot connect from end step'})
+        
+        # Update the connection
+        if connection_type == 'next' and source.step_type != 'if':
+            source.next_step = target
+            source.save()
+        
+        elif connection_type == 'true' and source.step_type == 'if':
+            source.branch_true = target
+            source.save()
+        
+        elif connection_type == 'false' and source.step_type == 'if':
+            source.branch_false = target
+            source.save()
+        
+        return JsonResponse({'success': True})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@permission_required('app1.generate_flow_code', raise_exception=True)
+def generate_flow_code(request, template_id):
+    """Generate and save the flow code"""
+    template = get_object_or_404(FlowTemplate, id=template_id)
+    steps = FlowStep.objects.filter(flow_template=template).order_by('position')
+    
+    # Find the start step
+    start_step = steps.filter(step_type='start').first()
+    if not start_step:
+        messages.error(request, 'جریان کار باید یک مرحله شروع داشته باشد.')
+        return redirect('app1:flow_designer', template_id=template.id)
+    
+    # Find the end step
+    end_step = steps.filter(step_type='end').first()
+    if not end_step:
+        messages.error(request, 'جریان کار باید یک مرحله پایان داشته باشد.')
+        return redirect('app1:flow_designer', template_id=template.id)
+    
+    # Generate the flow code
+    flow_class_name = ''.join(word.capitalize() for word in template.name.split())
+    if not flow_class_name.endswith('Flow'):
+        flow_class_name += 'Flow'
+    
+    # Import statements
+    imports = [
+        'from viewflow import this',
+        'from viewflow.workflow import flow, lock, act',
+        'from viewflow.workflow.flow import views',
+        'from django.utils import timezone',
+        f'from .models import {template.process_class}',
+    ]
+    
+    # Flow class definition
+    flow_code = [
+        f'class {flow_class_name}(flow.Flow):',
+        f'    process_class = {template.process_class}',
+        f'    app_name = "{template.app_name}"',
+        '    ',
+        f'    process_title = "{template.name}"',
+        f'    process_description = "{template.description}"',
+        '    ',
+    ]
+    
+    # Process steps
+    steps_code = []
+    function_definitions = []
+    
+    # Process each step
+    for step in steps:
+        if step.step_type == 'start':
+            next_step = step.next_step
+            if next_step:
+                steps_code.append(f'    start = flow.Start(this.start_process).Next(this.{next_step.name})')
+            else:
+                steps_code.append(f'    start = flow.Start(this.start_process).Next(this.end)')
+            
+            # Add the start_process function definition
+            function_definitions.append(
+                '    def start_process(self, activation):\n'
+                '        # Initialize any process data here\n'
+                '        return activation.process'
+            )
+        
+        elif step.step_type == 'view':
+            fields_str = step.view_fields if step.view_fields else ''
+            fields_list = [f'"{field.strip()}"' for field in fields_str.split(',') if field.strip()]
+            
+            view_code = f'    {step.name} = (\n'
+            view_code += f'        flow.View({step.view_class}.as_view(fields=[{", ".join(fields_list)}]))\n'
+            view_code += f'        .Annotation(title="{step.name}")\n'
+            
+            if step.auto_create_permission:
+                view_code += '        .Permission(auto_create=True)\n'
+            
+            if step.next_step:
+                view_code += f'        .Next(this.{step.next_step.name})\n'
+            else:
+                view_code += '        .Next(this.end)\n'
+            
+            view_code += '    )'
+            steps_code.append(view_code)
+        
+        elif step.step_type == 'function':
+            function_code = f'    {step.name} = (\n'
+            function_code += f'        flow.Function(this.{step.function_name})\n'
+            
+            if step.next_step:
+                function_code += f'        .Next(this.{step.next_step.name})\n'
+            else:
+                function_code += '        .Next(this.end)\n'
+            
+            function_code += '    )'
+            steps_code.append(function_code)
+            
+            # Add a placeholder function definition
+            function_definitions.append(
+                f'    def {step.function_name}(self, activation):\n'
+                f'        # Function implementation for {step.name}\n'
+                '        pass'
+            )
+        
+        elif step.step_type == 'if':
+            condition_code = ''
+            if step.condition_type == 'field_check':
+                condition_code = f'lambda activation: activation.process.{step.condition_field} == "{step.condition_value}"'
+            else:
+                # Use user-defined condition code
+                condition_code = step.condition_code or 'lambda activation: False'
+            
+            if_code = f'    {step.name} = (\n'
+            if_code += f'        flow.If({condition_code})\n'
+            
+            if step.branch_true:
+                if_code += f'        .Then(this.{step.branch_true.name})\n'
+            else:
+                if_code += '        .Then(this.end)\n'
+            
+            if step.branch_false:
+                if_code += f'        .Else(this.{step.branch_false.name})\n'
+            else:
+                if_code += '        .Else(this.end)\n'
+            
+            if_code += '    )'
+            steps_code.append(if_code)
+        
+        elif step.step_type == 'end':
+            steps_code.append('    end = flow.End()')
+    
+    # Combine all code sections
+    all_code = '\n'.join(imports) + '\n\n\n' + '\n'.join(flow_code) + '\n\n' + '\n\n'.join(steps_code) + '\n\n\n' + '\n\n'.join(function_definitions)
+    
+    # Save the code to flows.py
+    try:
+        import os
+        
+        # Get the app path
+        app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        flow_file_path = os.path.join(app_path, 'app1', 'flows.py')
+        
+        # Read the existing file
+        with open(flow_file_path, 'r') as f:
+            existing_code = f.read()
+        
+        # Check if the flow class already exists
+        if f'class {flow_class_name}(flow.Flow):' in existing_code:
+            # Update the existing class
+            # This is a simple approach - in a real implementation, you might want to use AST or similar
+            start_idx = existing_code.find(f'class {flow_class_name}(flow.Flow):')
+            if start_idx >= 0:
+                # Find the next class definition or EOF
+                next_class_idx = existing_code.find('class ', start_idx + 1)
+                if next_class_idx >= 0:
+                    existing_code = existing_code[:start_idx] + all_code + '\n\n' + existing_code[next_class_idx:]
+                else:
+                    existing_code = existing_code[:start_idx] + all_code
+        else:
+            # Append the new class
+            existing_code += '\n\n\n' + all_code
+        
+        # Write back to the file
+        with open(flow_file_path, 'w') as f:
+            f.write(existing_code)
+        
+        # Update the template
+        template.code_generated = True
+        template.save()
+        
+        # Update urls.py to include the new flow
+        try:
+            urls_file_path = os.path.join(app_path, 'config', 'urls.py')
+            
+            if os.path.exists(urls_file_path):
+                with open(urls_file_path, 'r') as f:
+                    urls_code = f.read()
+                
+                # Check if the flow is already registered
+                flow_import = f'from app1.flows import {flow_class_name}'
+                flow_registration = f'FlowAppViewset({flow_class_name}, icon="description")'
+                
+                if flow_import not in urls_code:
+                    # Add the import
+                    import_idx = urls_code.find('from app1.flows import')
+                    if import_idx >= 0:
+                        end_line_idx = urls_code.find('\n', import_idx)
+                        if end_line_idx >= 0:
+                            urls_code = urls_code[:end_line_idx] + f', {flow_class_name}' + urls_code[end_line_idx:]
+                    else:
+                        # Add new import
+                        first_import_idx = urls_code.find('import')
+                        if first_import_idx >= 0:
+                            end_line_idx = urls_code.find('\n', first_import_idx)
+                            if end_line_idx >= 0:
+                                urls_code = urls_code[:end_line_idx+1] + f'{flow_import}\n' + urls_code[end_line_idx+1:]
+                
+                if flow_registration not in urls_code:
+                    # Add the viewset registration
+                    viewsets_idx = urls_code.find('viewsets=[')
+                    if viewsets_idx >= 0:
+                        closing_bracket_idx = urls_code.find(']', viewsets_idx)
+                        if closing_bracket_idx >= 0:
+                            # Check if there are already viewsets
+                            if urls_code[viewsets_idx+9:closing_bracket_idx].strip():
+                                urls_code = urls_code[:closing_bracket_idx] + f',\n            {flow_registration}' + urls_code[closing_bracket_idx:]
+                            else:
+                                urls_code = urls_code[:closing_bracket_idx] + f'\n            {flow_registration}\n        ' + urls_code[closing_bracket_idx:]
+                
+                # Write back to the file
+                with open(urls_file_path, 'w') as f:
+                    f.write(urls_code)
+            
+            messages.success(request, 'کد جریان کار با موفقیت تولید و در urls.py ثبت شد.')
+            
+        except Exception as e:
+            messages.warning(request, f'کد جریان کار تولید شد اما ثبت در urls.py با خطا مواجه شد: {str(e)}')
+        
+        return redirect('app1:flow_template_list')
+        
+    except Exception as e:
+        messages.error(request, f'خطا در تولید کد جریان کار: {str(e)}')
+        return redirect('app1:flow_designer', template_id=template.id) 
        

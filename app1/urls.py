@@ -38,4 +38,14 @@ urlpatterns = [
     # Participant Management
     path('controls/participants/', views.participant_management, name='participant_management'),
     path('controls/company/<int:company_id>/details/', views.company_details, name='company_details'),
+
+    # Flow Designer
+    path('flows/', views.flow_template_list, name='flow_template_list'),
+    path('flows/create/', views.flow_template_create, name='flow_template_create'),
+    path('flows/<int:template_id>/designer/', views.flow_designer, name='flow_designer'),
+    path('flows/<int:template_id>/step/create/', views.flow_step_create, name='flow_step_create'),
+    path('flows/step/<int:step_id>/update/', views.flow_step_update, name='flow_step_update'),
+    path('flows/step/<int:step_id>/delete/', views.flow_step_delete, name='flow_step_delete'),
+    path('flows/connection/update/', views.flow_connection_update, name='flow_connection_update'),
+    path('flows/<int:template_id>/generate/', views.generate_flow_code, name='generate_flow_code'),
 ] 

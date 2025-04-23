@@ -11,7 +11,7 @@ site = Site(title="ACME Corp", viewsets=[
     Application(
         title='Tender Applications', icon='business_center', app_name='tender_application', viewsets=[
             FlowAppViewset(TenderApplicationFlow, icon="description"),
-        ]
+       ]
     ),
 ])
 
