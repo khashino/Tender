@@ -127,30 +127,3 @@ class TenderApplicationFlow(flow.Flow):
                 print(f"Error creating rejection notification: {str(e)}")
            
 
-
-
-
-
-class CustomFlow(flow.Flow):
-    process_class = TenderApplicationProcess
-    app_name = "custom_flow_1"
-    
-    process_title = "Custom"
-    process_description = "Custom sample"
-    
-
-    start = flow.Start(this.start_process).Next(this.test)
-
-    end = flow.End()
-
-    test = (
-        flow.View(views.CreateProcessView.as_view(fields=["is_shortlisted", "is_accepted"]))
-        .Annotation(title="test")
-        .Permission(auto_create=True)
-        .Next(this.end)
-    )
-
-
-    def start_process(self, activation):
-        # Initialize any process data here
-        return activation.process

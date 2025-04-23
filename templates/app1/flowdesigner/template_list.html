@@ -91,6 +91,10 @@
                                                         <i class="bi bi-code-slash"></i>
                                                         تولید کد
                                                     </a>
+                                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ template.id }}">
+                                                        <i class="bi bi-trash"></i>
+                                                        حذف
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -109,4 +113,30 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Modals -->
+{% for template in templates %}
+<div class="modal fade" id="deleteModal{{ template.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ template.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel{{ template.id }}">حذف جریان کار</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>آیا از حذف جریان کار "{{ template.name }}" اطمینان دارید؟</p>
+                <p class="text-danger">این عمل غیر قابل بازگشت است و کد تولید شده نیز حذف خواهد شد.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <form method="post" action="{% url 'app1:flow_template_delete' template.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
 {% endblock %} 

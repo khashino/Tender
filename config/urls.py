@@ -4,7 +4,7 @@ from django.views.generic import RedirectView
 from viewflow.contrib.auth import AuthViewset
 from viewflow.urls import Application, Site, ModelViewset
 from viewflow.workflow.flow import FlowAppViewset
-from app1.flows import TenderApplicationFlow, CustomFlow
+from app1.flows import TenderApplicationFlow
 
 
 site = Site(title="ACME Corp", viewsets=[
@@ -13,11 +13,7 @@ site = Site(title="ACME Corp", viewsets=[
             FlowAppViewset(TenderApplicationFlow, icon="description"),
         ]
     ),
-    Application(
-        title='CustomFlow', icon='business_center', app_name='CustomFlow', viewsets=[
-            FlowAppViewset(CustomFlow, icon="description"),
-        ]
-    ),
+    
 ])
 
 urlpatterns = [

@@ -18,6 +18,7 @@ from django.db import models
 from viewflow.workflow.models import Task
 from django.http import JsonResponse
 from django.db import transaction
+import re
 
 def home(request):
     if request.user.is_authenticated and not isinstance(request.user, App1User):
@@ -1071,10 +1072,15 @@ def generate_flow_code(request, template_id):
             else:
                 steps_code.append(f'    start = flow.Start(this.start_process).Next(this.end)')
             
-            # Add the start_process function definition
+            # Add the properly formatted start_process function definition that handles both activation and request
             function_definitions.append(
-                '    def start_process(self, activation):\n'
-                '        # Initialize any process data here\n'
+                '    def start_process(self, activation, **kwargs):\n'
+                '        """Initialize the process.\n'
+                '        \n'
+                '        This method can accept either an activation object or request parameters.\n'
+                '        """\n'
+                '        # Initialize process data\n'
+                '        activation.process.save()\n'
                 '        return activation.process'
             )
         
@@ -1184,68 +1190,43 @@ def generate_flow_code(request, template_id):
         
         # Update urls.py to include the new flow
         try:
-            import re
             urls_file_path = os.path.join(app_path, 'config', 'urls.py')
             
             if os.path.exists(urls_file_path):
                 with open(urls_file_path, 'r') as f:
                     urls_code = f.read()
                 
-                # Check if the flow is already imported
-                flow_import = f'from app1.flows import {flow_class_name}'
-                if flow_class_name not in urls_code:
-                    # Add the import
-                    import_pattern = re.compile(r'from app1\.flows import (.*)')
-                    match = import_pattern.search(urls_code)
-                    if match:
-                        # Add to existing import
-                        current_imports = match.group(1)
-                        new_imports = current_imports + f', {flow_class_name}'
-                        urls_code = import_pattern.sub(f'from app1.flows import {new_imports}', urls_code)
+                # Remove from imports
+                import_pattern = re.compile(fr'from app1\.flows import (.*{flow_class_name}.*)')
+                match = import_pattern.search(urls_code)
+                if match:
+                    imports = match.group(1)
+                    # Remove just this class from the imports
+                    if f', {flow_class_name},' in imports:
+                        new_imports = imports.replace(f', {flow_class_name}', '')
+                    elif f', {flow_class_name}' in imports:
+                        new_imports = imports.replace(f', {flow_class_name}', '')
+                    elif f'{flow_class_name}, ' in imports:
+                        new_imports = imports.replace(f'{flow_class_name}, ', '')
                     else:
-                        # Add new import line after the last import
-                        last_import_idx = urls_code.rfind('import')
-                        if last_import_idx >= 0:
-                            end_line_idx = urls_code.find('\n', last_import_idx)
-                            if end_line_idx >= 0:
-                                urls_code = urls_code[:end_line_idx+1] + f'{flow_import}\n' + urls_code[end_line_idx+1:]
-                
-                # Check if there's already an Application with this app_name
-                app_pattern = f"app_name='{template.app_name}'"
-                if app_pattern not in urls_code:
-                    # Create a new Application block
-                    application_block = f"""    Application(
-        title='{template.name}', icon='business_center', app_name='{template.app_name}', viewsets=[
-            FlowAppViewset({flow_class_name}, icon="description"),
-        ]
-    ),"""
+                        new_imports = imports.replace(f'{flow_class_name}', '')
                     
-                    # Find the site = Site(...) part
-                    site_idx = urls_code.find('site = Site(')
-                    if site_idx >= 0:
-                        # Find the closing bracket of the viewsets list
-                        viewsets_start = urls_code.find('viewsets=[', site_idx)
-                        if viewsets_start >= 0:
-                            viewsets_end = urls_code.find('])', viewsets_start)
-                            if viewsets_end >= 0:
-                                # Insert the new Application block before the closing bracket
-                                urls_code = urls_code[:viewsets_end] + '\n' + application_block + urls_code[viewsets_end:]
-                else:
-                    # Find the existing Application with this app_name
-                    app_start = urls_code.find(f"app_name='{template.app_name}'")
-                    if app_start >= 0:
-                        # Find the viewsets list
-                        viewsets_start = urls_code.find('viewsets=[', app_start)
-                        if viewsets_start >= 0:
-                            # Find the closing bracket of the viewsets list
-                            viewsets_end = urls_code.find(']', viewsets_start)
-                            if viewsets_end >= 0:
-                                # Check if this flow is already included
-                                flow_pattern = f"FlowAppViewset({flow_class_name}"
-                                if flow_pattern not in urls_code[viewsets_start:viewsets_end]:
-                                    # Insert the new flow before the closing bracket
-                                    flow_line = f'\n            FlowAppViewset({flow_class_name}, icon="description"),'
-                                    urls_code = urls_code[:viewsets_end] + flow_line + urls_code[viewsets_end:]
+                    urls_code = import_pattern.sub(f'from app1.flows import {new_imports}', urls_code)
+                    
+                    # If we ended up with empty imports (e.g., "from app1.flows import "), remove the line
+                    if 'from app1.flows import \n' in urls_code:
+                        urls_code = urls_code.replace('from app1.flows import \n', '')
+                
+                # Find and remove the entire Application block if it only contains this flow
+                app_pattern = fr"Application\(\s*title='[^']*',\s*icon='[^']*',\s*app_name='{template.app_name}',\s*viewsets=\[\s*FlowAppViewset\({flow_class_name},[^\]]*\]\s*\),\s*"
+                urls_code = re.sub(app_pattern, '', urls_code)
+                
+                # If the Application contains other flows, just remove this one
+                flow_pattern = fr"FlowAppViewset\({flow_class_name},[^\n]*\n"
+                urls_code = re.sub(flow_pattern, '', urls_code)
+                
+                # Clean up any trailing commas in the Site viewsets list
+                urls_code = urls_code.replace('],\n])', ']\n])')
                 
                 # Write back to the file
                 with open(urls_file_path, 'w') as f:
@@ -1260,5 +1241,120 @@ def generate_flow_code(request, template_id):
         
     except Exception as e:
         messages.error(request, f'خطا در تولید کد جریان کار: {str(e)}')
-        return redirect('app1:flow_designer', template_id=template.id) 
+        return redirect('app1:flow_designer', template_id=template.id)
+
+@login_required
+@permission_required('app1.delete_flow_template', raise_exception=True)
+def flow_template_delete(request, template_id):
+    """Delete a flow template and its code from flows.py and urls.py"""
+    template = get_object_or_404(FlowTemplate, id=template_id)
+    
+    # Only proceed if this is a POST request (to prevent accidental deletion via GET)
+    if request.method != 'POST':
+        messages.error(request, 'برای حذف جریان کار باید فرم را ارسال کنید.')
+        return redirect('app1:flow_template_list')
+    
+    # Generate the flow class name in the same way as when generating code
+    flow_class_name = ''.join(word.capitalize() for word in template.name.split())
+    if not flow_class_name.endswith('Flow'):
+        flow_class_name += 'Flow'
+    
+    try:
+        import os
+        import re
+        
+        # Get the app path
+        app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        flow_file_path = os.path.join(app_path, 'app1', 'flows.py')
+        
+        # 1. Remove from flows.py if the class exists
+        if os.path.exists(flow_file_path):
+            with open(flow_file_path, 'r') as f:
+                existing_code = f.read()
+            
+            # Find the flow class definition
+            start_idx = existing_code.find(f'class {flow_class_name}(flow.Flow):')
+            if start_idx >= 0:
+                # Find the next class definition or EOF
+                next_class_idx = existing_code.find('class ', start_idx + 1)
+                if next_class_idx >= 0:
+                    # Remove this class and keep everything else
+                    existing_code = existing_code[:start_idx] + existing_code[next_class_idx:]
+                else:
+                    # This is the last class, remove from start to the end
+                    # First, find the last import line to keep the imports
+                    last_import_idx = existing_code.rfind('import', 0, start_idx)
+                    if last_import_idx >= 0:
+                        end_import_line = existing_code.find('\n', last_import_idx)
+                        if end_import_line >= 0:
+                            existing_code = existing_code[:end_import_line + 2]  # Keep an extra blank line
+            
+                # Write back to the file
+                with open(flow_file_path, 'w') as f:
+                    f.write(existing_code)
+        
+        # 2. Remove from urls.py
+        urls_file_path = os.path.join(app_path, 'config', 'urls.py')
+        if os.path.exists(urls_file_path):
+            with open(urls_file_path, 'r') as f:
+                urls_code = f.read()
+            
+            # Remove from imports
+            import_pattern = re.compile(fr'from app1\.flows import (.*{flow_class_name}.*)')
+            match = import_pattern.search(urls_code)
+            if match:
+                imports = match.group(1)
+                # Remove just this class from the imports
+                if f', {flow_class_name},' in imports:
+                    new_imports = imports.replace(f', {flow_class_name}', '')
+                elif f', {flow_class_name}' in imports:
+                    new_imports = imports.replace(f', {flow_class_name}', '')
+                elif f'{flow_class_name}, ' in imports:
+                    new_imports = imports.replace(f'{flow_class_name}, ', '')
+                else:
+                    new_imports = imports.replace(f'{flow_class_name}', '')
+                
+                urls_code = import_pattern.sub(f'from app1.flows import {new_imports}', urls_code)
+                
+                # If we ended up with empty imports (e.g., "from app1.flows import "), remove the line
+                if 'from app1.flows import \n' in urls_code:
+                    urls_code = urls_code.replace('from app1.flows import \n', '')
+            
+            # Handle Custom Flow Deletion - Check for empty Application blocks
+            # Find any Application blocks that have empty viewsets
+            empty_app_pattern = re.compile(r"Application\(\s*title='[^']*',\s*icon='[^']*',\s*app_name='[^']*',\s*viewsets=\[\s*\]\s*\),")
+            urls_code = empty_app_pattern.sub('', urls_code)
+            
+            # Also find application blocks with our app_name but no registered viewsets (including with indentation and newlines)
+            app_name_pattern = re.compile(fr"Application\(\s*title='[^']*',\s*icon='[^']*',\s*app_name='{template.app_name}',\s*viewsets=\[\s*\]\s*\),")
+            urls_code = app_name_pattern.sub('', urls_code)
+            
+            # More complex pattern to match indented empty viewsets
+            complex_pattern = re.compile(fr"Application\(\s*title='[^']*',\s*icon='[^']*',\s*app_name='{template.app_name}',\s*viewsets=\[\s*\n\s*\]\s*\),")
+            urls_code = complex_pattern.sub('', urls_code)
+            
+            # Remove any FlowAppViewset entries for this flow
+            flow_viewset_pattern = re.compile(fr"FlowAppViewset\({flow_class_name}[^\n]*\n")
+            urls_code = flow_viewset_pattern.sub('', urls_code)
+            
+            # Clean up any trailing commas in the Site viewsets list
+            urls_code = urls_code.replace('],\n])', ']\n])')
+            
+            # Write back to the file
+            with open(urls_file_path, 'w') as f:
+                f.write(urls_code)
+        
+        # 3. Delete all steps associated with this template
+        FlowStep.objects.filter(flow_template=template).delete()
+        
+        # 4. Delete the template itself
+        template_name = template.name
+        template.delete()
+        
+        messages.success(request, f'جریان کار "{template_name}" با موفقیت حذف شد.')
+        
+    except Exception as e:
+        messages.error(request, f'خطا در حذف جریان کار: {str(e)}')
+    
+    return redirect('app1:flow_template_list') 
        

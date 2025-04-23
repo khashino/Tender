@@ -48,4 +48,5 @@ urlpatterns = [
     path('flows/step/<int:step_id>/delete/', views.flow_step_delete, name='flow_step_delete'),
     path('flows/connection/update/', views.flow_connection_update, name='flow_connection_update'),
     path('flows/<int:template_id>/generate/', views.generate_flow_code, name='generate_flow_code'),
+    path('flows/<int:template_id>/delete/', views.flow_template_delete, name='flow_template_delete'),
 ] 
