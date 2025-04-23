@@ -1184,42 +1184,68 @@ def generate_flow_code(request, template_id):
         
         # Update urls.py to include the new flow
         try:
+            import re
             urls_file_path = os.path.join(app_path, 'config', 'urls.py')
             
             if os.path.exists(urls_file_path):
                 with open(urls_file_path, 'r') as f:
                     urls_code = f.read()
                 
-                # Check if the flow is already registered
+                # Check if the flow is already imported
                 flow_import = f'from app1.flows import {flow_class_name}'
-                flow_registration = f'FlowAppViewset({flow_class_name}, icon="description")'
-                
-                if flow_import not in urls_code:
+                if flow_class_name not in urls_code:
                     # Add the import
-                    import_idx = urls_code.find('from app1.flows import')
-                    if import_idx >= 0:
-                        end_line_idx = urls_code.find('\n', import_idx)
-                        if end_line_idx >= 0:
-                            urls_code = urls_code[:end_line_idx] + f', {flow_class_name}' + urls_code[end_line_idx:]
+                    import_pattern = re.compile(r'from app1\.flows import (.*)')
+                    match = import_pattern.search(urls_code)
+                    if match:
+                        # Add to existing import
+                        current_imports = match.group(1)
+                        new_imports = current_imports + f', {flow_class_name}'
+                        urls_code = import_pattern.sub(f'from app1.flows import {new_imports}', urls_code)
                     else:
-                        # Add new import
-                        first_import_idx = urls_code.find('import')
-                        if first_import_idx >= 0:
-                            end_line_idx = urls_code.find('\n', first_import_idx)
+                        # Add new import line after the last import
+                        last_import_idx = urls_code.rfind('import')
+                        if last_import_idx >= 0:
+                            end_line_idx = urls_code.find('\n', last_import_idx)
                             if end_line_idx >= 0:
                                 urls_code = urls_code[:end_line_idx+1] + f'{flow_import}\n' + urls_code[end_line_idx+1:]
                 
-                if flow_registration not in urls_code:
-                    # Add the viewset registration
-                    viewsets_idx = urls_code.find('viewsets=[')
-                    if viewsets_idx >= 0:
-                        closing_bracket_idx = urls_code.find(']', viewsets_idx)
-                        if closing_bracket_idx >= 0:
-                            # Check if there are already viewsets
-                            if urls_code[viewsets_idx+9:closing_bracket_idx].strip():
-                                urls_code = urls_code[:closing_bracket_idx] + f',\n            {flow_registration}' + urls_code[closing_bracket_idx:]
-                            else:
-                                urls_code = urls_code[:closing_bracket_idx] + f'\n            {flow_registration}\n        ' + urls_code[closing_bracket_idx:]
+                # Check if there's already an Application with this app_name
+                app_pattern = f"app_name='{template.app_name}'"
+                if app_pattern not in urls_code:
+                    # Create a new Application block
+                    application_block = f"""    Application(
+        title='{template.name}', icon='business_center', app_name='{template.app_name}', viewsets=[
+            FlowAppViewset({flow_class_name}, icon="description"),
+        ]
+    ),"""
+                    
+                    # Find the site = Site(...) part
+                    site_idx = urls_code.find('site = Site(')
+                    if site_idx >= 0:
+                        # Find the closing bracket of the viewsets list
+                        viewsets_start = urls_code.find('viewsets=[', site_idx)
+                        if viewsets_start >= 0:
+                            viewsets_end = urls_code.find('])', viewsets_start)
+                            if viewsets_end >= 0:
+                                # Insert the new Application block before the closing bracket
+                                urls_code = urls_code[:viewsets_end] + '\n' + application_block + urls_code[viewsets_end:]
+                else:
+                    # Find the existing Application with this app_name
+                    app_start = urls_code.find(f"app_name='{template.app_name}'")
+                    if app_start >= 0:
+                        # Find the viewsets list
+                        viewsets_start = urls_code.find('viewsets=[', app_start)
+                        if viewsets_start >= 0:
+                            # Find the closing bracket of the viewsets list
+                            viewsets_end = urls_code.find(']', viewsets_start)
+                            if viewsets_end >= 0:
+                                # Check if this flow is already included
+                                flow_pattern = f"FlowAppViewset({flow_class_name}"
+                                if flow_pattern not in urls_code[viewsets_start:viewsets_end]:
+                                    # Insert the new flow before the closing bracket
+                                    flow_line = f'\n            FlowAppViewset({flow_class_name}, icon="description"),'
+                                    urls_code = urls_code[:viewsets_end] + flow_line + urls_code[viewsets_end:]
                 
                 # Write back to the file
                 with open(urls_file_path, 'w') as f:

@@ -4,14 +4,19 @@ from django.views.generic import RedirectView
 from viewflow.contrib.auth import AuthViewset
 from viewflow.urls import Application, Site, ModelViewset
 from viewflow.workflow.flow import FlowAppViewset
-from app1.flows import TenderApplicationFlow
+from app1.flows import TenderApplicationFlow, CustomFlow
 
 
 site = Site(title="ACME Corp", viewsets=[
     Application(
         title='Tender Applications', icon='business_center', app_name='tender_application', viewsets=[
             FlowAppViewset(TenderApplicationFlow, icon="description"),
-       ]
+        ]
+    ),
+    Application(
+        title='CustomFlow', icon='business_center', app_name='CustomFlow', viewsets=[
+            FlowAppViewset(CustomFlow, icon="description"),
+        ]
     ),
 ])
 
