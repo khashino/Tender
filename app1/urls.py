@@ -49,4 +49,16 @@ urlpatterns = [
     path('flows/connection/update/', views.flow_connection_update, name='flow_connection_update'),
     path('flows/<int:template_id>/generate/', views.generate_flow_code, name='generate_flow_code'),
     path('flows/<int:template_id>/delete/', views.flow_template_delete, name='flow_template_delete'),
+
+    # Role-based review URLs
+    path('tender/application/<int:application_id>/purchase-expert-review/', views.purchase_expert_review, name='purchase_expert_review'),
+    path('tender/application/<int:application_id>/team-leader-review/', views.team_leader_review, name='team_leader_review'),
+    path('tender/application/<int:application_id>/supply-chain-manager-review/', views.supply_chain_manager_review, name='supply_chain_manager_review'),
+    path('tender/application/<int:application_id>/technical-evaluator-review/', views.technical_evaluator_review, name='technical_evaluator_review'),
+    path('tender/application/<int:application_id>/financial-deputy-review/', views.financial_deputy_review, name='financial_deputy_review'),
+    path('tender/application/<int:application_id>/financial-manager-review/', views.financial_manager_review, name='financial_manager_review'),
+    path('tender/application/<int:application_id>/commercial-team-evaluator-review/', views.commercial_team_evaluator_review, name='commercial_team_evaluator_review'),
+    path('tender/application/<int:application_id>/financial-team-evaluator-review/', views.financial_team_evaluator_review, name='financial_team_evaluator_review'),
+    path('tender/application/<int:application_id>/transaction-commission-review/', views.transaction_commission_review, name='transaction_commission_review'),
+    path('tender/application/<int:application_id>/ceo-review/', views.ceo_review, name='ceo_review'),
 ] 

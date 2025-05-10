@@ -13,21 +13,23 @@ class TenderApplicationFlow(flow.Flow):
     process_title = "Tender Application Review"
     process_description = "Review process for tender applications"
 
+    
+
     # Start the flow when a new application is submitted
-    start_noninteractive = flow.StartHandle(this.start_process).Next(this.review)
+    start_noninteractive = flow.StartHandle(this.start_process).Next(this.purchase_expert_review)
 
     # Initial review step
-    review = (
-        flow.View(views.UpdateProcessView.as_view(fields=["notes", "is_shortlisted", "is_rejected"]))
-        .Annotation(title="Initial Review")
+    purchase_expert_review = (
+        flow.View(views.UpdateProcessView.as_view(fields=["notes", "is_approved", "is_rejected"]))
+        .Annotation(title="purchase expert review")
         .Permission(auto_create=True)
         .Next(this.check_initial_review)
     )
 
     # Check the result of the initial review
     check_initial_review = (
-        flow.If(lambda activation: activation.process.is_shortlisted)
-        .Then(this.detailed_review)
+        flow.If(lambda activation: activation.process.is_approved)
+        .Then(this.team_leader_review)
         .Else(this.check_rejected)
     )
 
@@ -39,9 +41,9 @@ class TenderApplicationFlow(flow.Flow):
     )
 
     # Detailed review for shortlisted applications
-    detailed_review = (
-        flow.View(views.UpdateProcessView.as_view(fields=["notes", "is_accepted", "is_rejected"]))
-        .Annotation(title="Detailed Review")
+    team_leader_review = (
+        flow.View(views.UpdateProcessView.as_view(fields=["notes", "is_approved", "is_rejected"]))
+        .Annotation(title="team leader review")
         .Permission(auto_create=True)
         .Next(this.check_final_decision)
     )

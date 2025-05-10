@@ -27,8 +27,11 @@ class App1User(AbstractUser):
         verbose_name_plural = 'کاربران'
 
     def __str__(self):
-        return self.username 
-    
+        return self.username
+
+    def has_role(self, role_name):
+        """Check if user has a specific role"""
+        return self.user_roles.filter(role__name=role_name).exists()
 
 class Role(models.Model):
     ROLE_CHOICES = [
@@ -53,6 +56,70 @@ class Role(models.Model):
             'view_page_company_profiles',
             'view_page_application_review',
             'view_page_application_execute',
+            # ViewFlow permissions
+            'viewflow.view_process',
+            'viewflow.view_task',
+            'viewflow.view_flow',
+            'viewflow.view_flowclass',
+            'viewflow.view_flowtask',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow site permissions
+            'viewflow.can_view_site',
+            'viewflow.can_view_flow',
+            'viewflow.can_view_process',
+            'viewflow.can_view_task',
+            # Additional ViewFlow permissions
+            'viewflow.view_flowchart',
+            'viewflow.view_flowchart_task',
+            'viewflow.view_flowchart_process',
+            'viewflow.view_flowchart_flow',
+            'viewflow.view_flowchart_flowclass',
+            'viewflow.view_flowchart_flowtask',
+            'viewflow.view_flowchart_flowtaskmodel',
+            'viewflow.view_flowchart_flowtaskmodelproxy',
+            'viewflow.view_flowchart_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowchart_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowchart_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowchart_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow admin permissions
+            'viewflow.add_process',
+            'viewflow.change_process',
+            'viewflow.delete_process',
+            'viewflow.add_task',
+            'viewflow.change_task',
+            'viewflow.delete_task',
+            'viewflow.add_flow',
+            'viewflow.change_flow',
+            'viewflow.delete_flow',
+            'viewflow.add_flowclass',
+            'viewflow.change_flowclass',
+            'viewflow.delete_flowclass',
+            'viewflow.add_flowtask',
+            'viewflow.change_flowtask',
+            'viewflow.delete_flowtask',
+            'viewflow.add_flowtaskmodel',
+            'viewflow.change_flowtaskmodel',
+            'viewflow.delete_flowtaskmodel',
+            'viewflow.add_flowtaskmodelproxy',
+            'viewflow.change_flowtaskmodelproxy',
+            'viewflow.delete_flowtaskmodelproxy',
+            'viewflow.add_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.change_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.delete_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.add_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.change_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.delete_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.add_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.change_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.delete_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.add_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.change_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.delete_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
         ],
         'team_leader': [
             'view_page_home',
@@ -62,6 +129,23 @@ class Role(models.Model):
             'view_page_application_review',
             'view_page_application_execute',
             'view_page_application_approval',
+            # ViewFlow permissions
+            'viewflow.view_process',
+            'viewflow.view_task',
+            'viewflow.view_flow',
+            'viewflow.view_flowclass',
+            'viewflow.view_flowtask',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow site permissions
+            'viewflow.can_view_site',
+            'viewflow.can_view_flow',
+            'viewflow.can_view_process',
+            'viewflow.can_view_task',
         ],
         'supply_chain_manager': [
             'view_page_home',
@@ -72,6 +156,23 @@ class Role(models.Model):
             'view_page_application_execute',
             'view_page_application_approval',
             'view_page_supplier_management',
+            # ViewFlow permissions
+            'viewflow.view_process',
+            'viewflow.view_task',
+            'viewflow.view_flow',
+            'viewflow.view_flowclass',
+            'viewflow.view_flowtask',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow site permissions
+            'viewflow.can_view_site',
+            'viewflow.can_view_flow',
+            'viewflow.can_view_process',
+            'viewflow.can_view_task',
         ],
         'technical_evaluator': [
             'view_page_home',
@@ -81,6 +182,23 @@ class Role(models.Model):
             'view_page_application_review',
             'view_page_application_execute',
             'view_page_technical_evaluation',
+            # ViewFlow permissions
+            'viewflow.view_process',
+            'viewflow.view_task',
+            'viewflow.view_flow',
+            'viewflow.view_flowclass',
+            'viewflow.view_flowtask',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow site permissions
+            'viewflow.can_view_site',
+            'viewflow.can_view_flow',
+            'viewflow.can_view_process',
+            'viewflow.can_view_task',
         ],
         'financial_deputy': [
             'view_page_home',
@@ -91,6 +209,23 @@ class Role(models.Model):
             'view_page_application_execute',
             'view_page_financial_evaluation',
             'view_page_financial_approval',
+            # ViewFlow permissions
+            'viewflow.view_process',
+            'viewflow.view_task',
+            'viewflow.view_flow',
+            'viewflow.view_flowclass',
+            'viewflow.view_flowtask',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow site permissions
+            'viewflow.can_view_site',
+            'viewflow.can_view_flow',
+            'viewflow.can_view_process',
+            'viewflow.can_view_task',
         ],
         'financial_manager': [
             'view_page_home',
@@ -102,6 +237,24 @@ class Role(models.Model):
             'view_page_financial_evaluation',
             'view_page_financial_approval',
             'view_page_budget_management',
+            # ViewFlow permissions
+            'viewflow.view_process',
+            'viewflow.view_task',
+            'viewflow.view_flow',
+            'viewflow.view_flowclass',
+            'viewflow.view_flowtask',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow site permissions
+            'viewflow.can_view_site',
+            'viewflow.can_view_flow',
+            'viewflow.can_view_process',
+            'viewflow.can_view_task',
         ],
         'commercial_team_evaluator': [
             'view_page_home',
@@ -111,6 +264,23 @@ class Role(models.Model):
             'view_page_application_review',
             'view_page_application_execute',
             'view_page_commercial_evaluation',
+            # ViewFlow permissions
+            'viewflow.view_process',
+            'viewflow.view_task',
+            'viewflow.view_flow',
+            'viewflow.view_flowclass',
+            'viewflow.view_flowtask',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow site permissions
+            'viewflow.can_view_site',
+            'viewflow.can_view_flow',
+            'viewflow.can_view_process',
+            'viewflow.can_view_task',
         ],
         'financial_team_evaluator': [
             'view_page_home',
@@ -120,6 +290,23 @@ class Role(models.Model):
             'view_page_application_review',
             'view_page_application_execute',
             'view_page_financial_evaluation',
+            # ViewFlow permissions
+            'viewflow.view_process',
+            'viewflow.view_task',
+            'viewflow.view_flow',
+            'viewflow.view_flowclass',
+            'viewflow.view_flowtask',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow site permissions
+            'viewflow.can_view_site',
+            'viewflow.can_view_flow',
+            'viewflow.can_view_process',
+            'viewflow.can_view_task',
         ],
         'transaction_commission': [
             'view_page_home',
@@ -130,6 +317,23 @@ class Role(models.Model):
             'view_page_application_execute',
             'view_page_transaction_approval',
             'view_page_final_decision',
+            # ViewFlow permissions
+            'viewflow.view_process',
+            'viewflow.view_task',
+            'viewflow.view_flow',
+            'viewflow.view_flowclass',
+            'viewflow.view_flowtask',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow site permissions
+            'viewflow.can_view_site',
+            'viewflow.can_view_flow',
+            'viewflow.can_view_process',
+            'viewflow.can_view_task',
         ],
         'ceo': [
             'view_page_home',
@@ -142,6 +346,23 @@ class Role(models.Model):
             'view_page_final_decision',
             'view_page_role_management',
             'view_page_user_management',
+            # ViewFlow permissions
+            'viewflow.view_process',
+            'viewflow.view_task',
+            'viewflow.view_flow',
+            'viewflow.view_flowclass',
+            'viewflow.view_flowtask',
+            'viewflow.view_flowtaskmodel',
+            'viewflow.view_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            'viewflow.view_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy_flowtaskmodelproxy',
+            # ViewFlow site permissions
+            'viewflow.can_view_site',
+            'viewflow.can_view_flow',
+            'viewflow.can_view_process',
+            'viewflow.can_view_task',
         ],
     }
 
@@ -235,6 +456,7 @@ class TenderApplicationProcess(Process):
     is_shortlisted = jsonstore.BooleanField(default=False)
     is_accepted = jsonstore.BooleanField(default=False)
     is_rejected = jsonstore.BooleanField(default=False)
+    is_approved = jsonstore.BooleanField(default=False)
     
     class Meta:
         verbose_name = "Tender Application Process"
