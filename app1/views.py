@@ -1378,19 +1378,9 @@ def role_review(request, application_id, role):
         messages.error(request, 'No active task found for this application.')
         return redirect('app1:tender_applications')
     
-    # Map roles to their display names
-    role_display_names = {
-        'purchase_expert': 'کارشناس خرید',
-        'team_leader': 'سرپرست خرید',
-        'supply_chain_manager': 'مدیر زنجیره تامین',
-        'technical_evaluator': 'ارزیاب فنی',
-        'financial_deputy': 'معاونت مالی',
-        'financial_manager': 'مدیر مالی',
-        'commercial_team_evaluator': 'ارزیاب تیم بازرگانی',
-        'financial_team_evaluator': 'ارزیاب تیم مالی',
-        'transaction_commission': 'کمیسیون معاملات',
-        'ceo': 'مدیر عامل',
-    }
+    # Get role display name from flow class
+    flow = TenderApplicationFlow()
+    role_display_names = flow.ROLE_DISPLAY_NAMES
     
     if role not in role_display_names:
         messages.error(request, 'Invalid role specified.')
@@ -1402,166 +1392,20 @@ def role_review(request, application_id, role):
         return redirect('app1:tender_applications')
     
     if request.method == 'POST':
-        # Save review notes
-        process.notes = request.POST.get('notes', '')
-        process.is_accepted = request.POST.get('is_accepted') == 'on'
-        process.is_rejected = request.POST.get('is_rejected') == 'on'
-        process.save()
+        # Prepare review data
+        review_data = {
+            'notes': request.POST.get('notes', ''),
+            'is_accepted': request.POST.get('is_accepted') == 'on',
+            'is_rejected': request.POST.get('is_rejected') == 'on'
+        }
         
-        # Update application status based on the review decision
-        if process.is_rejected:
-            application.status = 'rejected'
-        elif process.is_accepted:
-            application.status = 'accepted'
-        else:
-            application.status = 'reviewed'
-        application.save()
+        try:
+            # Handle the review process using flow function
+            flow.handle_role_review(process, current_task, role, request.user, review_data)
+            messages.success(request, f'Review completed successfully by {role_display_names[role]}.')
+        except Exception as e:
+            messages.error(request, f'Error processing review: {str(e)}')
         
-        # Complete the task and activate the next task in the workflow
-        with transaction.atomic():
-            # Set the task as done
-            current_task.status = 'DONE'
-            current_task.finished = timezone.now()
-            current_task.owner = request.user
-            current_task.save()
-            
-            # Create a flow instance
-            flow = TenderApplicationFlow()
-            
-            # Get the next task based on the flow definition
-            if role == 'purchase_expert':
-                if process.is_accepted:
-                    # Create team_leader_review task
-                    next_task = Task.objects.create(
-                        process=process,
-                        flow_task=flow.team_leader_review,
-                        status='NEW',
-                        created=timezone.now()
-                    )
-                    next_task.previous.set([current_task])
-                else:
-                    # Create check_rejected task
-                    next_task = Task.objects.create(
-                        process=process,
-                        flow_task=flow.check_rejected,
-                        status='NEW',
-                        created=timezone.now()
-                    )
-                    next_task.previous.set([current_task])
-                    
-                    # If rejected, create notify_rejection task
-                    if process.is_rejected:
-                        notify_task = Task.objects.create(
-                            process=process,
-                            flow_task=flow.notify_rejection,
-                            status='NEW',
-                            created=timezone.now()
-                        )
-                        notify_task.previous.set([next_task])
-                        
-                        # Execute the notification function
-                        try:
-                            flow.send_rejection_notification(notify_task.flow_task.activation_class(notify_task))
-                            notify_task.status = 'DONE'
-                            notify_task.finished = timezone.now()
-                            notify_task.save()
-                            
-                            # Create the end task
-                            end_task = Task.objects.create(
-                                process=process,
-                                flow_task=flow.end,
-                                status='DONE',
-                                created=timezone.now(),
-                                started=timezone.now(),
-                                finished=timezone.now()
-                            )
-                            end_task.previous.set([notify_task])
-                        except Exception as e:
-                            messages.error(request, f'Error sending rejection notification: {str(e)}')
-                    else:
-                        # Create the end task
-                        end_task = Task.objects.create(
-                            process=process,
-                            flow_task=flow.end,
-                            status='DONE',
-                            created=timezone.now(),
-                            started=timezone.now(),
-                            finished=timezone.now()
-                        )
-                        end_task.previous.set([next_task])
-            else:
-                # For other roles, follow the existing flow
-                if process.is_accepted:
-                    # Create a notify_acceptance task
-                    next_task = Task.objects.create(
-                        process=process,
-                        flow_task=flow.notify_acceptance,
-                        status='NEW',
-                        created=timezone.now()
-                    )
-                    next_task.previous.set([current_task])
-                    
-                    # Execute the notification function
-                    try:
-                        flow.send_acceptance_notification(next_task.flow_task.activation_class(next_task))
-                        next_task.status = 'DONE'
-                        next_task.finished = timezone.now()
-                        next_task.save()
-                        
-                        # Create the end task
-                        end_task = Task.objects.create(
-                            process=process,
-                            flow_task=flow.end,
-                            status='DONE',
-                            created=timezone.now(),
-                            started=timezone.now(),
-                            finished=timezone.now()
-                        )
-                        end_task.previous.set([next_task])
-                    except Exception as e:
-                        messages.error(request, f'Error sending acceptance notification: {str(e)}')
-                elif process.is_rejected:
-                    # Create a notify_rejection task
-                    next_task = Task.objects.create(
-                        process=process,
-                        flow_task=flow.notify_rejection,
-                        status='NEW',
-                        created=timezone.now()
-                    )
-                    next_task.previous.set([current_task])
-                    
-                    # Execute the notification function
-                    try:
-                        flow.send_rejection_notification(next_task.flow_task.activation_class(next_task))
-                        next_task.status = 'DONE'
-                        next_task.finished = timezone.now()
-                        next_task.save()
-                        
-                        # Create the end task
-                        end_task = Task.objects.create(
-                            process=process,
-                            flow_task=flow.end,
-                            status='DONE',
-                            created=timezone.now(),
-                            started=timezone.now(),
-                            finished=timezone.now()
-                        )
-                        end_task.previous.set([next_task])
-                    except Exception as e:
-                        messages.error(request, f'Error sending rejection notification: {str(e)}')
-                else:
-                    # Create an end task
-                    next_task = Task.objects.create(
-                        process=process,
-                        flow_task=flow.end,
-                        status='DONE',
-                        created=timezone.now(),
-                        started=timezone.now(),
-                        finished=timezone.now()
-                    )
-                    next_task.previous.set([current_task])
-        
-        messages.success(request, f'Review completed successfully by {role_display_names[role]}.')
         return redirect('app1:tender_applications')
     
     return render(request, 'app1/tender/role_review.html', {

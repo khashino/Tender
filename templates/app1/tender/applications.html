@@ -68,7 +68,7 @@
                                     {{ application.current_step }}
                                 </span>
                             </td>
-                            <td>
+                            <!--<td>
                                 {% if application.assigned_to %}
                                     <div class="d-flex align-items-center">
                                         <i class="bi bi-person-circle me-2"></i>
@@ -77,7 +77,7 @@
                                 {% else %}
                                     <span class="text-muted">تخصیص داده نشده</span>
                                 {% endif %}
-                            </td>
+                            </td>-->
                             <td>
                                 <div class="btn-group">
                                     <a href="{% url 'app1:review_application' application.id %}" 
