@@ -1,0 +1,258 @@
+2025-05-14 12:56:17,653 - camunda_workers.management.commands.start_camunda_workers - INFO - Starting Camunda workers management command
+2025-05-14 12:56:17,654 - camunda_workers.management.commands.start_camunda_workers - INFO - Starting tender review worker...
+2025-05-14 12:56:17,654 - camunda_workers.tender_review_worker - INFO - Initializing TenderReviewWorker with ID: tender_review_worker
+2025-05-14 12:56:17,654 - camunda_workers.base_worker - INFO - Initializing base worker with ID: tender_review_worker
+2025-05-14 12:56:17,655 - camunda_workers.base_worker - INFO - Zeebe configuration: hostname=localhost, port=26500, tls=False
+2025-05-14 12:56:17,655 - camunda_workers.base_worker - INFO - Creating gRPC channel...
+2025-05-14 12:56:17,666 - camunda_workers.base_worker - INFO - gRPC channel created successfully
+2025-05-14 12:56:17,667 - camunda_workers.base_worker - INFO - Initializing Zeebe worker...
+2025-05-14 12:56:17,674 - camunda_workers.base_worker - INFO - ZeebeWorker initialized successfully
+2025-05-14 12:56:17,675 - camunda_workers.base_worker - INFO - Initializing Zeebe client...
+2025-05-14 12:56:17,675 - camunda_workers.base_worker - INFO - ZeebeClient initialized successfully
+2025-05-14 12:56:17,675 - camunda_workers.tender_review_worker - INFO - Registering task handlers...
+2025-05-14 12:56:17,676 - camunda_workers.tender_review_worker - INFO - Task handlers registered successfully
+2025-05-14 12:56:17,676 - camunda_workers.base_worker - INFO - Starting worker...
+2025-05-14 12:56:17,677 - camunda_workers.base_worker - INFO - Connecting to Zeebe...
+2025-05-14 12:56:27,999 - camunda_workers.tender_review_worker - INFO - Initializing TenderReviewWorker with ID: process_starter
+2025-05-14 12:56:28,000 - camunda_workers.base_worker - INFO - Initializing base worker with ID: process_starter
+2025-05-14 12:56:28,000 - camunda_workers.base_worker - INFO - Zeebe configuration: hostname=localhost, port=26500, tls=False
+2025-05-14 12:56:28,000 - camunda_workers.base_worker - INFO - Creating gRPC channel...
+2025-05-14 12:56:28,003 - camunda_workers.base_worker - INFO - gRPC channel created successfully
+2025-05-14 12:56:28,003 - camunda_workers.base_worker - INFO - Initializing Zeebe worker...
+2025-05-14 12:56:28,008 - camunda_workers.base_worker - INFO - ZeebeWorker initialized successfully
+2025-05-14 12:56:28,008 - camunda_workers.base_worker - INFO - Initializing Zeebe client...
+2025-05-14 12:56:28,008 - camunda_workers.base_worker - INFO - ZeebeClient initialized successfully
+2025-05-14 12:56:28,008 - camunda_workers.tender_review_worker - INFO - Registering task handlers...
+2025-05-14 12:56:28,009 - camunda_workers.tender_review_worker - INFO - Task handlers registered successfully
+2025-05-14 12:56:28,010 - camunda_workers.base_worker - INFO - Creating process instance for tender_application_review
+2025-05-14 12:56:28,010 - camunda_workers.base_worker - INFO - Process variables: {'applicationId': 'TENDER-2024-001', 'status': 'SUBMITTED', 'currentStep': 'START_PROCESS'}
+2025-05-14 12:56:28,025 - camunda_workers.base_worker - INFO - Process instance created successfully: 2251799813702743
+2025-05-14 12:56:28,026 - camunda_workers.base_worker - INFO - Stopping worker...
+2025-05-14 12:56:28,026 - camunda_workers.base_worker - INFO - Stopping worker from accepting new jobs...
+2025-05-14 12:56:28,027 - camunda_workers.base_worker - INFO - Worker stopped accepting new jobs
+2025-05-14 12:56:28,027 - camunda_workers.base_worker - INFO - Closing gRPC channel...
+2025-05-14 12:56:28,028 - camunda_workers.base_worker - INFO - gRPC channel closed successfully
+2025-05-14 12:56:28,028 - camunda_workers.base_worker - INFO - Worker stopped successfully
+2025-05-14 12:56:28,034 - camunda_workers.tender_review_worker - INFO - ==================================================
+2025-05-14 12:56:28,035 - camunda_workers.tender_review_worker - INFO - Received Start Process task
+2025-05-14 12:56:28,035 - camunda_workers.tender_review_worker - INFO - Job Key: 2251799813702751
+2025-05-14 12:56:28,035 - camunda_workers.tender_review_worker - INFO - Process Instance Key: 2251799813702743
+2025-05-14 12:56:28,036 - camunda_workers.tender_review_worker - INFO - Element ID: start_process
+2025-05-14 12:56:28,036 - camunda_workers.tender_review_worker - INFO - Element Instance Key: 2251799813702750
+2025-05-14 12:56:28,036 - camunda_workers.tender_review_worker - INFO - Worker: tender_review_worker
+2025-05-14 12:56:28,037 - camunda_workers.tender_review_worker - INFO - Custom Headers: {}
+2025-05-14 12:56:28,037 - camunda_workers.tender_review_worker - INFO - Variables: {
+  "status": "SUBMITTED",
+  "currentStep": "START_PROCESS",
+  "applicationId": "TENDER-2024-001"
+}
+2025-05-14 12:56:28,038 - camunda_workers.tender_review_worker - INFO - ==================================================
+2025-05-14 12:56:28,038 - camunda_workers.tender_review_worker - INFO - Processing start task for application TENDER-2024-001
+2025-05-14 12:56:28,038 - camunda_workers.tender_review_worker - INFO - Updating process status and timestamps
+2025-05-14 12:56:28,039 - camunda_workers.tender_review_worker - INFO - Task completed successfully. Returning result: {
+  "startTime": "2025-05-14T12:56:28.039012",
+  "status": "IN_REVIEW",
+  "currentStep": "PURCHASE_EXPERT_REVIEW"
+}
+2025-05-14 13:00:48,225 - camunda_workers.management.commands.start_camunda_workers - INFO - Starting Camunda workers management command
+2025-05-14 13:00:48,226 - camunda_workers.management.commands.start_camunda_workers - INFO - Starting tender review worker...
+2025-05-14 13:00:48,226 - camunda_workers.tender_review_worker - INFO - Initializing TenderReviewWorker with ID: tender_review_worker
+2025-05-14 13:00:48,226 - camunda_workers.base_worker - INFO - Initializing base worker with ID: tender_review_worker
+2025-05-14 13:00:48,227 - camunda_workers.base_worker - INFO - Zeebe configuration: hostname=localhost, port=26500, tls=False
+2025-05-14 13:00:48,227 - camunda_workers.base_worker - INFO - Creating gRPC channel...
+2025-05-14 13:00:48,229 - camunda_workers.base_worker - INFO - gRPC channel created successfully
+2025-05-14 13:00:48,230 - camunda_workers.base_worker - INFO - Initializing Zeebe worker...
+2025-05-14 13:00:48,234 - camunda_workers.base_worker - INFO - ZeebeWorker initialized successfully
+2025-05-14 13:00:48,234 - camunda_workers.base_worker - INFO - Initializing Zeebe client...
+2025-05-14 13:00:48,235 - camunda_workers.base_worker - INFO - ZeebeClient initialized successfully
+2025-05-14 13:00:48,235 - camunda_workers.tender_review_worker - INFO - Registering task handlers...
+2025-05-14 13:00:48,235 - camunda_workers.tender_review_worker - INFO - Task handlers registered successfully
+2025-05-14 13:00:48,236 - camunda_workers.base_worker - INFO - Starting worker...
+2025-05-14 13:00:48,236 - camunda_workers.base_worker - INFO - Connecting to Zeebe...
+2025-05-14 13:01:33,306 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:01:33,307 - camunda_workers.management.commands.complete_human_task - INFO - Connecting to Zeebe at localhost:26500
+2025-05-14 13:01:33,310 - camunda_workers.management.commands.complete_human_task - INFO - Created gRPC channel
+2025-05-14 13:01:33,310 - camunda_workers.management.commands.complete_human_task - INFO - Created Zeebe client
+2025-05-14 13:01:33,311 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813685251 with decision: approve
+2025-05-14 13:01:33,311 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:01:33,312 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:01:33,312 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete_job request for job key: 2251799813685251
+2025-05-14 13:01:33,312 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: 'ZeebeClient' object has no attribute 'complete_job'
+2025-05-14 13:01:33,313 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: 'ZeebeClient' object has no attribute 'complete_job'
+2025-05-14 13:01:33,314 - camunda_workers.management.commands.complete_human_task - INFO - Closing gRPC channel
+2025-05-14 13:01:33,314 - camunda_workers.management.commands.complete_human_task - INFO - gRPC channel closed
+2025-05-14 13:01:33,315 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: 'ZeebeClient' object has no attribute 'complete_job'
+2025-05-14 13:02:29,770 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:02:29,771 - camunda_workers.management.commands.complete_human_task - INFO - Connecting to Zeebe at localhost:26500
+2025-05-14 13:02:29,773 - camunda_workers.management.commands.complete_human_task - INFO - Created gRPC channel
+2025-05-14 13:02:29,774 - camunda_workers.management.commands.complete_human_task - INFO - Created Zeebe client
+2025-05-14 13:02:29,774 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702756 with decision: approve
+2025-05-14 13:02:29,775 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:02:29,775 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:02:29,776 - camunda_workers.management.commands.complete_human_task - INFO - Sending publish_message request for job key: 2251799813702756
+2025-05-14 13:02:29,802 - camunda_workers.management.commands.complete_human_task - INFO - Successfully completed task 2251799813702756 with decision: approve
+2025-05-14 13:02:29,803 - camunda_workers.management.commands.complete_human_task - INFO - Closing gRPC channel
+2025-05-14 13:02:29,804 - camunda_workers.management.commands.complete_human_task - INFO - gRPC channel closed
+2025-05-14 13:02:59,413 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:02:59,414 - camunda_workers.management.commands.complete_human_task - INFO - Connecting to Zeebe at localhost:26500
+2025-05-14 13:02:59,416 - camunda_workers.management.commands.complete_human_task - INFO - Created gRPC channel
+2025-05-14 13:02:59,417 - camunda_workers.management.commands.complete_human_task - INFO - Created Zeebe client
+2025-05-14 13:02:59,417 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702743 with decision: approve
+2025-05-14 13:02:59,418 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:02:59,418 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:02:59,418 - camunda_workers.management.commands.complete_human_task - INFO - Sending publish_message request for job key: 2251799813702743
+2025-05-14 13:02:59,429 - camunda_workers.management.commands.complete_human_task - INFO - Successfully completed task 2251799813702743 with decision: approve
+2025-05-14 13:02:59,430 - camunda_workers.management.commands.complete_human_task - INFO - Closing gRPC channel
+2025-05-14 13:02:59,430 - camunda_workers.management.commands.complete_human_task - INFO - gRPC channel closed
+2025-05-14 13:04:01,267 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:04:01,269 - camunda_workers.management.commands.complete_human_task - INFO - Connecting to Zeebe at localhost:26500
+2025-05-14 13:04:01,273 - camunda_workers.management.commands.complete_human_task - INFO - Created gRPC channel
+2025-05-14 13:04:01,273 - camunda_workers.management.commands.complete_human_task - INFO - Created Zeebe client
+2025-05-14 13:04:01,274 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702756 with decision: approve
+2025-05-14 13:04:01,275 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:04:01,275 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:04:01,276 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete_task request for job key: 2251799813702756
+2025-05-14 13:04:01,276 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: 'ZeebeClient' object has no attribute 'set_variables'
+2025-05-14 13:04:01,277 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: 'ZeebeClient' object has no attribute 'set_variables'
+2025-05-14 13:04:01,277 - camunda_workers.management.commands.complete_human_task - INFO - Closing gRPC channel
+2025-05-14 13:04:01,278 - camunda_workers.management.commands.complete_human_task - INFO - gRPC channel closed
+2025-05-14 13:04:01,279 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: 'ZeebeClient' object has no attribute 'set_variables'
+2025-05-14 13:05:15,241 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:05:15,242 - camunda_workers.management.commands.complete_human_task - INFO - Connecting to Zeebe at localhost:26500
+2025-05-14 13:05:15,245 - camunda_workers.management.commands.complete_human_task - INFO - Created gRPC channel
+2025-05-14 13:05:15,246 - camunda_workers.management.commands.complete_human_task - INFO - Created Zeebe client
+2025-05-14 13:05:15,247 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702756 with decision: approve
+2025-05-14 13:05:15,247 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:05:15,248 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:05:15,248 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete_task request for job key: 2251799813702756
+2025-05-14 13:05:15,249 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: 'ZeebeClient' object has no attribute 'create_worker'
+2025-05-14 13:05:15,250 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: 'ZeebeClient' object has no attribute 'create_worker'
+2025-05-14 13:05:15,250 - camunda_workers.management.commands.complete_human_task - INFO - Closing gRPC channel
+2025-05-14 13:05:15,251 - camunda_workers.management.commands.complete_human_task - INFO - gRPC channel closed
+2025-05-14 13:05:15,252 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: 'ZeebeClient' object has no attribute 'create_worker'
+2025-05-14 13:06:01,218 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:06:01,220 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702756 with decision: approve
+2025-05-14 13:06:01,220 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:06:01,220 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:06:01,221 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete task request to: http://localhost:26500/tasks/2251799813702756/complete
+2025-05-14 13:06:01,230 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: 400, message="Expected HTTP/:\n\n  b''\n    ^", url='http://localhost:26500/tasks/2251799813702756/complete'
+2025-05-14 13:06:01,231 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: 400, message="Expected HTTP/:\n\n  b''\n    ^", url='http://localhost:26500/tasks/2251799813702756/complete'
+2025-05-14 13:06:01,232 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: 400, message="Expected HTTP/:\n\n  b''\n    ^", url='http://localhost:26500/tasks/2251799813702756/complete'
+2025-05-14 13:06:24,737 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:06:24,738 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702756 with decision: approve
+2025-05-14 13:06:24,738 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:06:24,739 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:06:24,739 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete task request to: http://localhost:8080/engine-rest/task/2251799813702756/complete
+2025-05-14 13:06:24,762 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task. Status: 404, Response: {"timestamp":"2025-05-14T09:36:24.757+00:00","status":404,"error":"Not Found","path":"/engine-rest/task/2251799813702756/complete"}
+2025-05-14 13:06:24,763 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: Failed to complete task. Status: 404, Response: {"timestamp":"2025-05-14T09:36:24.757+00:00","status":404,"error":"Not Found","path":"/engine-rest/task/2251799813702756/complete"}
+2025-05-14 13:06:24,765 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: Failed to complete task. Status: 404, Response: {"timestamp":"2025-05-14T09:36:24.757+00:00","status":404,"error":"Not Found","path":"/engine-rest/task/2251799813702756/complete"}
+2025-05-14 13:06:24,767 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: Failed to complete task. Status: 404, Response: {"timestamp":"2025-05-14T09:36:24.757+00:00","status":404,"error":"Not Found","path":"/engine-rest/task/2251799813702756/complete"}
+2025-05-14 13:07:20,117 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:07:20,119 - camunda_workers.management.commands.complete_human_task - INFO - Connecting to Zeebe at localhost:26500
+2025-05-14 13:07:20,122 - camunda_workers.management.commands.complete_human_task - INFO - Created gRPC channel
+2025-05-14 13:07:20,123 - camunda_workers.management.commands.complete_human_task - INFO - Created Zeebe client
+2025-05-14 13:07:20,123 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702756 with decision: approve
+2025-05-14 13:07:20,123 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:07:20,124 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:07:20,124 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete task request for job key: 2251799813702756
+2025-05-14 13:07:20,124 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: 'ZeebeClient' object has no attribute 'create_worker'
+2025-05-14 13:07:20,125 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: 'ZeebeClient' object has no attribute 'create_worker'
+2025-05-14 13:07:20,128 - camunda_workers.management.commands.complete_human_task - INFO - Closing gRPC channel
+2025-05-14 13:07:20,128 - camunda_workers.management.commands.complete_human_task - INFO - gRPC channel closed
+2025-05-14 13:07:20,129 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: 'ZeebeClient' object has no attribute 'create_worker'
+2025-05-14 13:09:03,197 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:09:03,199 - camunda_workers.tender_review_worker - INFO - Initializing TenderReviewWorker with ID: task_completer
+2025-05-14 13:09:03,199 - camunda_workers.base_worker - INFO - Initializing base worker with ID: task_completer
+2025-05-14 13:09:03,200 - camunda_workers.base_worker - INFO - Zeebe configuration: hostname=localhost, port=26500, tls=False
+2025-05-14 13:09:03,200 - camunda_workers.base_worker - INFO - Creating gRPC channel...
+2025-05-14 13:09:03,203 - camunda_workers.base_worker - INFO - gRPC channel created successfully
+2025-05-14 13:09:03,203 - camunda_workers.base_worker - INFO - Initializing Zeebe worker...
+2025-05-14 13:09:03,208 - camunda_workers.base_worker - INFO - ZeebeWorker initialized successfully
+2025-05-14 13:09:03,209 - camunda_workers.base_worker - INFO - Initializing Zeebe client...
+2025-05-14 13:09:03,209 - camunda_workers.base_worker - INFO - ZeebeClient initialized successfully
+2025-05-14 13:09:03,210 - camunda_workers.tender_review_worker - INFO - Registering task handlers...
+2025-05-14 13:09:03,210 - camunda_workers.tender_review_worker - INFO - Task handlers registered successfully
+2025-05-14 13:09:03,211 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702756 with decision: approve
+2025-05-14 13:09:03,211 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:09:03,212 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:09:03,212 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete task request for job key: 2251799813702756
+2025-05-14 13:09:03,212 - camunda_workers.base_worker - INFO - Starting worker...
+2025-05-14 13:09:03,212 - camunda_workers.base_worker - INFO - Connecting to Zeebe...
+2025-05-14 13:12:20,379 - camunda_workers.tender_review_worker - INFO - ==================================================
+2025-05-14 13:12:20,380 - camunda_workers.tender_review_worker - INFO - Received Start Process task
+2025-05-14 13:12:20,380 - camunda_workers.tender_review_worker - INFO - Job Key: 2251799813706038
+2025-05-14 13:12:20,380 - camunda_workers.tender_review_worker - INFO - Process Instance Key: 2251799813706033
+2025-05-14 13:12:20,380 - camunda_workers.tender_review_worker - INFO - Element ID: start_process
+2025-05-14 13:12:20,381 - camunda_workers.tender_review_worker - INFO - Element Instance Key: 2251799813706037
+2025-05-14 13:12:20,381 - camunda_workers.tender_review_worker - INFO - Worker: tender_review_worker
+2025-05-14 13:12:20,381 - camunda_workers.tender_review_worker - INFO - Custom Headers: {}
+2025-05-14 13:12:20,381 - camunda_workers.tender_review_worker - INFO - Variables: {}
+2025-05-14 13:12:20,382 - camunda_workers.tender_review_worker - INFO - ==================================================
+2025-05-14 13:12:20,382 - camunda_workers.tender_review_worker - INFO - Processing start task for application None
+2025-05-14 13:12:20,382 - camunda_workers.tender_review_worker - INFO - Updating process status and timestamps
+2025-05-14 13:12:20,383 - camunda_workers.tender_review_worker - INFO - Task completed successfully. Returning result: {
+  "startTime": "2025-05-14T13:12:20.383074",
+  "status": "IN_REVIEW",
+  "currentStep": "PURCHASE_EXPERT_REVIEW"
+}
+2025-05-14 13:12:37,431 - camunda_workers.tender_review_worker - INFO - ==================================================
+2025-05-14 13:12:37,432 - camunda_workers.tender_review_worker - INFO - Received Check Purchase Expert Decision task
+2025-05-14 13:12:37,432 - camunda_workers.tender_review_worker - INFO - Job Key: 2251799813706097
+2025-05-14 13:12:37,432 - camunda_workers.tender_review_worker - INFO - Process Instance Key: 2251799813706033
+2025-05-14 13:12:37,433 - camunda_workers.tender_review_worker - INFO - Element ID: check_purchase_expert_decision
+2025-05-14 13:12:37,433 - camunda_workers.tender_review_worker - INFO - Element Instance Key: 2251799813706096
+2025-05-14 13:12:37,433 - camunda_workers.tender_review_worker - INFO - Worker: tender_review_worker
+2025-05-14 13:12:37,433 - camunda_workers.tender_review_worker - INFO - Custom Headers: {}
+2025-05-14 13:12:37,434 - camunda_workers.tender_review_worker - INFO - Variables: {
+  "status": "IN_REVIEW",
+  "startTime": "2025-05-14T13:12:20.383074",
+  "currentStep": "PURCHASE_EXPERT_REVIEW"
+}
+2025-05-14 13:12:37,434 - camunda_workers.tender_review_worker - INFO - ==================================================
+2025-05-14 13:12:37,435 - camunda_workers.tender_review_worker - INFO - Checking decision for application None, task None
+2025-05-14 13:12:37,435 - camunda_workers.tender_review_worker - INFO - Decision processed. Returning result: {
+  "purchaseExpertReview": {
+    "status": "COMPLETED",
+    "decision": "REJECTED",
+    "decisionTimestamp": "2025-05-14T13:12:37.435657",
+    "comments": "No comment provided"
+  },
+  "status": "COMPLETED",
+  "currentStep": "COMPLETED",
+  "is_approved": false
+}
+2025-05-14 13:12:44,633 - camunda_workers.tender_review_worker - INFO - ==================================================
+2025-05-14 13:12:44,633 - camunda_workers.tender_review_worker - INFO - Received Check Purchase Expert Decision task
+2025-05-14 13:12:44,633 - camunda_workers.tender_review_worker - INFO - Job Key: 2251799813706144
+2025-05-14 13:12:44,634 - camunda_workers.tender_review_worker - INFO - Process Instance Key: 2251799813702743
+2025-05-14 13:12:44,634 - camunda_workers.tender_review_worker - INFO - Element ID: check_purchase_expert_decision
+2025-05-14 13:12:44,634 - camunda_workers.tender_review_worker - INFO - Element Instance Key: 2251799813706143
+2025-05-14 13:12:44,635 - camunda_workers.tender_review_worker - INFO - Worker: task_completer
+2025-05-14 13:12:44,636 - camunda_workers.tender_review_worker - INFO - Custom Headers: {}
+2025-05-14 13:12:44,636 - camunda_workers.tender_review_worker - INFO - Variables: {
+  "status": "IN_REVIEW",
+  "startTime": "2025-05-14T12:56:28.039012",
+  "currentStep": "PURCHASE_EXPERT_REVIEW",
+  "applicationId": "TENDER-2024-001"
+}
+2025-05-14 13:12:44,637 - camunda_workers.tender_review_worker - INFO - ==================================================
+2025-05-14 13:12:44,638 - camunda_workers.tender_review_worker - INFO - Checking decision for application TENDER-2024-001, task None
+2025-05-14 13:12:44,638 - camunda_workers.tender_review_worker - INFO - Decision processed. Returning result: {
+  "purchaseExpertReview": {
+    "status": "COMPLETED",
+    "decision": "REJECTED",
+    "decisionTimestamp": "2025-05-14T13:12:44.638583",
+    "comments": "No comment provided"
+  },
+  "status": "COMPLETED",
+  "currentStep": "COMPLETED",
+  "is_approved": false
+}
+2025-05-14 13:12:52,582 - camunda_workers.management.commands.complete_human_task - INFO - Stopping worker
+2025-05-14 13:12:52,583 - camunda_workers.base_worker - INFO - Stopping worker...
+2025-05-14 13:12:52,583 - camunda_workers.base_worker - INFO - Stopping worker from accepting new jobs...
+2025-05-14 13:12:52,583 - camunda_workers.base_worker - INFO - Worker stopped accepting new jobs
+2025-05-14 13:12:52,583 - camunda_workers.base_worker - INFO - Closing gRPC channel...
+2025-05-14 13:12:52,585 - camunda_workers.base_worker - INFO - gRPC channel closed successfully
+2025-05-14 13:12:52,586 - camunda_workers.base_worker - INFO - Worker stopped successfully
+2025-05-14 13:12:52,586 - camunda_workers.management.commands.complete_human_task - INFO - Worker stopped

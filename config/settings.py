@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'shared_models',
     'viewflow',
     'viewflow.workflow',
+    'camunda_workers',
 ]
 
 MIDDLEWARE = [
@@ -97,4 +98,48 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'home' 
+LOGOUT_REDIRECT_URL = 'home'
+
+# Zeebe/Camunda 8 settings
+ZEEBE_HOSTNAME = 'localhost'
+ZEEBE_PORT = 26500
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'logs/camunda_workers.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'camunda_workers': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'pyzeebe': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
+# Create logs directory if it doesn't exist
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+
+# ... rest of the settings ... 

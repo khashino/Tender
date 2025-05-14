@@ -40,7 +40,7 @@ class TenderApplicationFlow(flow.Flow):
         .Permission(auto_create=True)
         .Next(this.check_initial_review)
     )
-
+    
     # Check the result of the initial review
     check_initial_review = (
         flow.If(lambda activation: activation.process.is_approved)
