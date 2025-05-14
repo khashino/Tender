@@ -256,3 +256,47 @@
 2025-05-14 13:12:52,585 - camunda_workers.base_worker - INFO - gRPC channel closed successfully
 2025-05-14 13:12:52,586 - camunda_workers.base_worker - INFO - Worker stopped successfully
 2025-05-14 13:12:52,586 - camunda_workers.management.commands.complete_human_task - INFO - Worker stopped
+2025-05-14 13:17:44,529 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:17:44,530 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702756 with decision: approve
+2025-05-14 13:17:44,530 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:17:44,531 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:17:44,531 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete task request to: http://localhost:8080/v2/user-tasks/2251799813702756/completion
+2025-05-14 13:17:44,544 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:17:44,544 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:17:44,545 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:17:44,547 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:09,308 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:18:09,309 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702035 with decision: approve
+2025-05-14 13:18:09,310 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:18:09,310 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:18:09,311 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete task request to: http://localhost:8080/v2/user-tasks/2251799813702035/completion
+2025-05-14 13:18:09,321 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:09,322 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:09,323 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:09,325 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:29,944 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:18:29,945 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702035 with decision: approve
+2025-05-14 13:18:29,945 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:18:29,946 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:18:29,946 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete task request to: http://localhost:8080/v2/user-tasks/2251799813702035/completion
+2025-05-14 13:18:29,956 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:29,956 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:29,957 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:29,958 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:33,622 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:18:33,623 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702756 with decision: approve
+2025-05-14 13:18:33,624 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:18:33,624 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:18:33,624 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete task request to: http://localhost:8080/v2/user-tasks/2251799813702756/completion
+2025-05-14 13:18:33,634 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:33,635 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:33,636 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:18:33,638 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: Failed to complete task. Status: 401, Response: {"message":""}
+2025-05-14 13:19:11,878 - camunda_workers.management.commands.complete_human_task - INFO - Starting task completion command
+2025-05-14 13:19:11,879 - camunda_workers.management.commands.complete_human_task - INFO - Completing task 2251799813702756 with decision: approve
+2025-05-14 13:19:11,879 - camunda_workers.management.commands.complete_human_task - INFO - Additional comment: Task reviewed and decision made
+2025-05-14 13:19:11,880 - camunda_workers.management.commands.complete_human_task - INFO - Prepared variables: {'decision': 'APPROVE', 'comment': 'Task reviewed and decision made', 'status': 'COMPLETED', 'is_approved': True}
+2025-05-14 13:19:11,880 - camunda_workers.management.commands.complete_human_task - INFO - Sending complete task request to: http://localhost:26500/jobs/2251799813702756/complete
+2025-05-14 13:19:11,890 - camunda_workers.management.commands.complete_human_task - ERROR - Failed to complete task: 400, message="Expected HTTP/:\n\n  b''\n    ^", url='http://localhost:26500/jobs/2251799813702756/complete'
+2025-05-14 13:19:11,891 - camunda_workers.management.commands.complete_human_task - ERROR - Error in task completion: 400, message="Expected HTTP/:\n\n  b''\n    ^", url='http://localhost:26500/jobs/2251799813702756/complete'
+2025-05-14 13:19:11,893 - camunda_workers.management.commands.complete_human_task - ERROR - Error completing task: 400, message="Expected HTTP/:\n\n  b''\n    ^", url='http://localhost:26500/jobs/2251799813702756/complete'
