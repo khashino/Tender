@@ -452,4 +452,316 @@ def update_user_vendor_id(user_id, vendor_id):
         if cursor:
             cursor.close()
         if connection:
+            connection.close()
+
+def get_oracle_user_messages(user_id, limit=5):
+    """
+    Get messages for a user from KRN_USER_MESSAGE table
+    
+    Args:
+        user_id (int): User ID to get messages for
+        limit (int): Maximum number of messages to return
+        
+    Returns:
+        list: List of message dictionaries
+    """
+    if not user_id:
+        return []
+        
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        query = """
+        SELECT MESSAGE_ID,
+               USER_ID,
+               MESSAGE_TEXT,
+               SENT_DATE,
+               IS_READ,
+               TYPE,
+               ICON
+          FROM KRN_USER_MESSAGE
+         WHERE USER_ID = :1
+         ORDER BY SENT_DATE DESC
+         FETCH FIRST :2 ROWS ONLY
+        """
+        
+        cursor.execute(query, [user_id, limit])
+        results = cursor.fetchall()
+        
+        messages = []
+        if results:
+            columns = [desc[0] for desc in cursor.description]
+            for row in results:
+                message_dict = dict(zip(columns, row))
+                messages.append(message_dict)
+        
+        return messages
+        
+    except Exception as e:
+        logger.error(f"Error retrieving messages for user {user_id}: {str(e)}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def get_oracle_user_message_count(user_id, unread_only=True):
+    """
+    Get count of messages for a user from KRN_USER_MESSAGE table
+    
+    Args:
+        user_id (int): User ID to count messages for
+        unread_only (bool): If True, count only unread messages
+        
+    Returns:
+        int: Number of messages
+    """
+    if not user_id:
+        return 0
+        
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        if unread_only:
+            query = """
+            SELECT COUNT(*) as message_count
+              FROM KRN_USER_MESSAGE
+             WHERE USER_ID = :1 AND IS_READ = 0
+            """
+        else:
+            query = """
+            SELECT COUNT(*) as message_count
+              FROM KRN_USER_MESSAGE
+             WHERE USER_ID = :1
+            """
+        
+        cursor.execute(query, [user_id])
+        result = cursor.fetchone()
+        
+        return result[0] if result else 0
+        
+    except Exception as e:
+        logger.error(f"Error counting messages for user {user_id}: {str(e)}")
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def get_oracle_notifications(group_id=None, limit=5):
+    """
+    Get notifications from KRN_USER_NOTIF table
+    
+    Args:
+        group_id (int): Optional group ID to filter notifications
+        limit (int): Maximum number of notifications to return
+        
+    Returns:
+        list: List of notification dictionaries
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        if group_id:
+            query = """
+            SELECT NOTIF_ID,
+                   GROUP_ID,
+                   NOTIF_TEXT,
+                   NOTIF_DATE,
+                   ICON,
+                   TYPE
+              FROM KRN_USER_NOTIF
+             WHERE GROUP_ID = :1
+             ORDER BY NOTIF_DATE DESC
+             FETCH FIRST :2 ROWS ONLY
+            """
+            cursor.execute(query, [group_id, limit])
+        else:
+            # Get all notifications if no group specified
+            query = """
+            SELECT NOTIF_ID,
+                   GROUP_ID,
+                   NOTIF_TEXT,
+                   NOTIF_DATE,
+                   ICON,
+                   TYPE
+              FROM KRN_USER_NOTIF
+             ORDER BY NOTIF_DATE DESC
+             FETCH FIRST :1 ROWS ONLY
+            """
+            cursor.execute(query, [limit])
+        
+        results = cursor.fetchall()
+        
+        notifications = []
+        if results:
+            columns = [desc[0] for desc in cursor.description]
+            for row in results:
+                notif_dict = dict(zip(columns, row))
+                notifications.append(notif_dict)
+        
+        return notifications
+        
+    except Exception as e:
+        logger.error(f"Error retrieving notifications: {str(e)}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def get_oracle_notification_count(group_id=None):
+    """
+    Get count of notifications from KRN_USER_NOTIF table
+    
+    Args:
+        group_id (int): Optional group ID to filter notifications
+        
+    Returns:
+        int: Number of notifications
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        if group_id:
+            query = """
+            SELECT COUNT(*) as notif_count
+              FROM KRN_USER_NOTIF
+             WHERE GROUP_ID = :1
+            """
+            cursor.execute(query, [group_id])
+        else:
+            query = """
+            SELECT COUNT(*) as notif_count
+              FROM KRN_USER_NOTIF
+            """
+            cursor.execute(query)
+        
+        result = cursor.fetchone()
+        
+        return result[0] if result else 0
+        
+    except Exception as e:
+        logger.error(f"Error counting notifications: {str(e)}")
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def mark_oracle_message_as_read(message_id, user_id):
+    """
+    Mark a message as read in KRN_USER_MESSAGE table
+    
+    Args:
+        message_id (int): Message ID to mark as read
+        user_id (int): User ID (for security check)
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        update_query = """
+        UPDATE KRN_USER_MESSAGE 
+        SET IS_READ = 1
+        WHERE MESSAGE_ID = :1 AND USER_ID = :2
+        """
+        
+        cursor.execute(update_query, [message_id, user_id])
+        connection.commit()
+        
+        logger.info(f"Message {message_id} marked as read for user {user_id}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error marking message as read: {str(e)}")
+        if connection:
+            connection.rollback()
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def create_oracle_message(user_id, message_text, message_type=None):
+    """
+    Create a new message in KRN_USER_MESSAGE table
+    
+    Args:
+        user_id (int): User ID to send message to
+        message_text (str): Message content
+        message_type (str): Optional message type
+        
+    Returns:
+        dict: Created message data if successful, None otherwise
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        insert_query = """
+        INSERT INTO KRN_USER_MESSAGE 
+        (USER_ID, MESSAGE_TEXT, TYPE, IS_READ)
+        VALUES (:1, :2, :3, 0)
+        RETURNING MESSAGE_ID INTO :4
+        """
+        
+        # Create output variable for RETURNING clause
+        message_id_var = cursor.var(int)
+        
+        cursor.execute(insert_query, [
+            user_id,
+            message_text,
+            message_type,
+            message_id_var
+        ])
+        connection.commit()
+        
+        # Get the generated MESSAGE_ID
+        generated_message_id = message_id_var.getvalue()[0]
+        
+        result = {
+            'MESSAGE_ID': generated_message_id,
+            'USER_ID': user_id,
+            'MESSAGE_TEXT': message_text,
+            'TYPE': message_type,
+            'IS_READ': 0
+        }
+        
+        logger.info(f"Message created successfully with ID {generated_message_id} for user {user_id}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error creating message: {str(e)}")
+        if connection:
+            connection.rollback()
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
             connection.close() 
