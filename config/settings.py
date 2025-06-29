@@ -96,9 +96,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom user model - now using app2 as main app
 AUTH_USER_MODEL = 'app2.App2User'
 
-# Authentication backends - now using only app2
+# Authentication backends - now using Oracle database
 AUTHENTICATION_BACKENDS = [
-    'app2.auth_backend.App2AuthBackend',
+    'app2.auth_backend.OracleAuthBackend',
+    'app2.auth_backend.App2AuthBackend',  # Fallback
 ]
 
 LOGIN_REDIRECT_URL = 'home'

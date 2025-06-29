@@ -30,4 +30,7 @@ urlpatterns = [
     path('oracle/table/<str:table_name>/', views.oracle_table_info, name='oracle_table_info'),
     path('oracle/query/', views.oracle_query_interface, name='oracle_query_interface'),
     path('oracle/query/ajax/', views.oracle_query_ajax, name='oracle_query_ajax'),
+    
+    # Debug view to clear sessions
+    path('clear-sessions/', views.clear_sessions_view, name='clear_sessions'),
 ] 

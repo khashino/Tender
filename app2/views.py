@@ -9,7 +9,7 @@ from django.conf import settings
 import os
 from .models import App2User, Company, CompanyDocument, Announcement, LatestNews, Notification, Message
 from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm, TenderApplicationForm
-from .auth_backend import App2AuthBackend
+from .auth_backend import App2AuthBackend, OracleUser
 from .oracle_utils import execute_oracle_query, test_oracle_connection, get_oracle_tables, get_oracle_table_info
 from shared_models.models import Tender, TenderApplication
 from django.utils import timezone
@@ -33,26 +33,58 @@ def home(request):
     return render(request, 'app2/home.html', context)
 
 def login_view(request):
-    if request.user.is_authenticated and isinstance(request.user, App2User):
+    # Clear any existing session data to prevent conflicts
+    if hasattr(request, 'session'):
+        request.session.flush()
+    
+    # Check if user is already authenticated (Oracle or Django user)
+    if request.user.is_authenticated:
         return redirect('app2:home')
         
     if request.method == 'POST':
-        form = App2AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None and isinstance(user, App2User):
-                login(request, user, backend='app2.auth_backend.App2AuthBackend')
-                messages.success(request, f'Welcome back, {username}!')
-                return redirect('app2:home')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        if username and password:
+            # Authenticate using Oracle backend
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                # Handle Oracle user login manually to ensure correct session data
+                if isinstance(user, OracleUser):
+                    # Store the correct session data for OracleUser
+                    from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, HASH_SESSION_KEY
+                    
+                    # Clear any existing session data
+                    request.session.flush()
+                    
+                    # Store the user ID (integer) and backend path
+                    request.session[SESSION_KEY] = user.pk  # This should be an integer
+                    request.session[BACKEND_SESSION_KEY] = 'app2.auth_backend.OracleAuthBackend'
+                    request.session[HASH_SESSION_KEY] = user.get_session_auth_hash()
+                    
+                    # Ensure session is saved
+                    request.session.save()
+                    
+                    # Set the user on the request
+                    request.user = user
+                    
+                    welcome_name = user.get_full_name() or user.username
+                    messages.success(request, f'خوش آمدید، {welcome_name}!')
+                else:
+                    # Use standard Django login for regular users
+                    login(request, user)
+                    messages.success(request, f'خوش آمدید، {username}!')
+                
+                # Redirect to next page or home
+                next_url = request.GET.get('next', 'app2:home')
+                return redirect(next_url)
             else:
-                messages.error(request, 'Invalid username or password.')
+                messages.error(request, 'نام کاربری یا رمز عبور اشتباه است.')
         else:
-            messages.error(request, 'Invalid username or password.')
-    else:
-        form = App2AuthenticationForm()
-    return render(request, 'app2/login.html', {'form': form})
+            messages.error(request, 'لطفاً نام کاربری و رمز عبور را وارد کنید.')
+    
+    return render(request, 'app2/login.html')
 
 def register(request):
     if request.user.is_authenticated and isinstance(request.user, App2User):
@@ -73,8 +105,8 @@ def register(request):
 
 def logout_view(request):
     logout(request)
-    messages.info(request, 'You have been logged out.')
-    return redirect('app2:home')
+    messages.success(request, 'شما با موفقیت خارج شدید.')
+    return redirect('app2:login')
 
 @login_required
 def settings(request):
@@ -361,4 +393,15 @@ def oracle_query_ajax(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500) 
+        return JsonResponse({'error': str(e)}, status=500)
+
+def clear_sessions_view(request):
+    """Debug view to clear all sessions"""
+    from django.contrib.sessions.models import Session
+    Session.objects.all().delete()
+    
+    # Also clear current session
+    if hasattr(request, 'session'):
+        request.session.flush()
+    
+    return HttpResponse("All sessions cleared. <a href='/app2/login/'>Go to login</a>") 

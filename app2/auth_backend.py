@@ -1,20 +1,233 @@
-from django.contrib.auth.backends import ModelBackend
-from .models import App2User
+from django.contrib.auth.backends import BaseBackend
+from django.contrib.auth.models import AnonymousUser
+from app2.oracle_utils import execute_oracle_query
+import logging
 
-class App2AuthBackend(ModelBackend):
+logger = logging.getLogger(__name__)
+
+
+class OracleUserPK:
+    """Mock primary key field for OracleUser"""
+    def value_to_string(self, value):
+        return str(value)
+
+
+class OracleUserMeta:
+    """Mock _meta class for OracleUser to make it compatible with Django's auth system"""
+    
+    def __init__(self):
+        self.pk = OracleUserPK()
+
+
+class OracleUser:
+    """Custom user class for Oracle database authentication"""
+    
+    def __init__(self, user_data):
+        self.user_data = user_data
+        self._is_authenticated = True
+        self.is_active = bool(user_data.get('IS_ACTIVE', 0))
+        self.is_anonymous = False
+        self.is_superuser = False
+        self.is_staff = False
+        
+        # User properties from Oracle table
+        self.user_id = user_data.get('USER_ID')
+        self.username = user_data.get('USER_NAME')
+        self.name = user_data.get('NAME')
+        self.family = user_data.get('FAMILY')
+        self.phone_number = user_data.get('PHONE_NUMBER')
+        self.address = user_data.get('ADDRESS')
+        self.vendor_id = user_data.get('VENDOR_ID')
+        self.group_id = user_data.get('GROUP_ID')
+        self.dashboard_type = user_data.get('DASHBOARD_TYPE')
+        self.created_date = user_data.get('CREATED_DATE')
+        
+        # USER_ID is the primary key from Oracle - ensure it's properly handled
+        # Since USER_ID is GENERATED ALWAYS AS IDENTITY, it should always be a valid integer
+        if self.user_id is not None:
+            try:
+                # Ensure it's an integer (Oracle NUMBER type)
+                self.pk = int(self.user_id)
+                self.id = self.pk  # Django expects both pk and id
+            except (ValueError, TypeError):
+                # If conversion fails, there's a data issue
+                raise ValueError(f"Invalid USER_ID primary key: {self.user_id}")
+        else:
+            raise ValueError("USER_ID cannot be None - it's the primary key")
+            
+        self.first_name = self.name or ''
+        self.last_name = self.family or ''
+        self.email = ''  # Not available in Oracle table
+        
+        # Add _meta attribute for Django auth compatibility
+        self._meta = OracleUserMeta()
+        
+        # Add _state attribute for Django compatibility
+        self._state = type('obj', (object,), {'adding': False, 'db': None})()
+    
+    @property
+    def is_authenticated(self):
+        """Always return True for authenticated users"""
+        return self._is_authenticated
+    
+    def __str__(self):
+        # Return username only to avoid session serialization issues
+        return str(self.username) if self.username else f"User_{self.pk}"
+    
+    def __repr__(self):
+        return f"<OracleUser: {self.username} (ID: {self.user_id})>"
+    
+    def get_full_name(self):
+        return f"{self.name} {self.family}".strip()
+    
+    def get_short_name(self):
+        return self.name or self.username
+    
+    def has_perm(self, perm, obj=None):
+        return False  # No permission system for now
+    
+    def has_module_perms(self, app_label):
+        return False  # No permission system for now
+    
+    def save(self, *args, **kwargs):
+        """Mock save method for Django compatibility"""
+        pass
+    
+    def delete(self, *args, **kwargs):
+        """Mock delete method for Django compatibility"""
+        pass
+    
+    def get_username(self):
+        """Return the username for this user"""
+        return self.username
+    
+    def serializable_value(self, field_name):
+        """Return serializable value for session storage"""
+        if field_name == 'pk' or field_name == 'id':
+            return int(self.pk)  # Always return as integer
+        return getattr(self, field_name, None)
+    
+    def _get_pk_val(self):
+        """Return the primary key value - required for Django compatibility"""
+        return int(self.pk)  # Always return as integer
+    
+    def __int__(self):
+        """Return integer representation of the user (the primary key)"""
+        return int(self.pk)
+    
+    def natural_key(self):
+        """Return natural key for the user"""
+        return (self.username,)
+    
+    # Additional methods for Django compatibility
+    def get_session_auth_hash(self):
+        """Return a hash for session invalidation"""
+        return str(self.pk)
+    
+    def get_deferred_fields(self):
+        """Return empty set for Django compatibility"""
+        return set()
+    
+    def refresh_from_db(self, using=None, fields=None):
+        """Mock method for Django compatibility"""
+        pass
+
+
+class OracleAuthBackend(BaseBackend):
+    """Authentication backend using Oracle KRN_USER_DETAIL table"""
+    
     def authenticate(self, request, username=None, password=None, **kwargs):
-        try:
-            user = App2User.objects.get(username=username)
-            if user.check_password(password):
-                return user
-        except App2User.DoesNotExist:
+        if not username or not password:
             return None
-
+        
+        try:
+            # Query Oracle database for user authentication
+            query = """
+            SELECT a.ADDRESS,
+                   a.CREATED_DATE,
+                   a.DASHBOARD_TYPE,
+                   a.FAMILY,
+                   a.GROUP_ID,
+                   a.IS_ACTIVE,
+                   a.NAME,
+                   a.PASSWORD,
+                   a.PHONE_NUMBER,
+                   a.USER_ID,
+                   a.USER_NAME,
+                   a.VENDOR_ID
+              FROM KRN_USER_DETAIL a
+             WHERE dashboard_type = 'Public' 
+               AND is_active = 1
+               AND UPPER(user_name) = UPPER(%s) 
+               AND password = %s
+            """
+            
+            results = execute_oracle_query(query, [username, password])
+            
+            if results:
+                user_data = results[0]
+                logger.info(f"Oracle authentication successful for user: {username}")
+                return OracleUser(user_data)
+            else:
+                logger.warning(f"Oracle authentication failed for user: {username}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Oracle authentication error: {str(e)}")
+            return None
+    
     def get_user(self, user_id):
         try:
-            return App2User.objects.get(pk=user_id)
-        except App2User.DoesNotExist:
+            # Convert user_id to integer if it's a string
+            try:
+                user_id = int(user_id)
+            except (ValueError, TypeError):
+                logger.error(f"Invalid user_id format: {user_id}")
+                return None
+            
+            # Get user by USER_ID from Oracle
+            query = """
+            SELECT a.ADDRESS,
+                   a.CREATED_DATE,
+                   a.DASHBOARD_TYPE,
+                   a.FAMILY,
+                   a.GROUP_ID,
+                   a.IS_ACTIVE,
+                   a.NAME,
+                   a.PASSWORD,
+                   a.PHONE_NUMBER,
+                   a.USER_ID,
+                   a.USER_NAME,
+                   a.VENDOR_ID
+              FROM KRN_USER_DETAIL a
+             WHERE user_id = %s 
+               AND dashboard_type = 'Public' 
+               AND is_active = 1
+            """
+            
+            results = execute_oracle_query(query, [user_id])
+            
+            if results:
+                user_data = results[0]
+                return OracleUser(user_data)
+            else:
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error getting Oracle user by ID {user_id}: {str(e)}")
             return None
 
-    def user_can_authenticate(self, user):
-        return isinstance(user, App2User) 
+
+# Keep the old backend for backward compatibility
+class App2AuthBackend(BaseBackend):
+    """Legacy authentication backend - now redirects to Oracle"""
+    
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        # Redirect to Oracle authentication
+        oracle_backend = OracleAuthBackend()
+        return oracle_backend.authenticate(request, username, password, **kwargs)
+    
+    def get_user(self, user_id):
+        # Redirect to Oracle user retrieval
+        oracle_backend = OracleAuthBackend()
+        return oracle_backend.get_user(user_id) 
