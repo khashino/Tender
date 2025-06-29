@@ -57,7 +57,7 @@ DATABASES = {
     },
     'oracle': {
         'ENGINE': 'django.db.backends.oracle',
-        'NAME': '192.168.7.93:1522/FREEPDB1',
+        'NAME': '172.27.131.178:1522/FREEPDB1',
         'USER': 'NAK',
         'PASSWORD': '78007625645_Kh',
         'OPTIONS': {},
