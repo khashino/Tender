@@ -4,14 +4,17 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, FileResponse, JsonResponse
 from django.conf import settings
 import os
 from .models import App2User, Company, CompanyDocument, Announcement, LatestNews, Notification, Message
 from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm, TenderApplicationForm
 from .auth_backend import App2AuthBackend
+from .oracle_utils import execute_oracle_query, test_oracle_connection, get_oracle_tables, get_oracle_table_info
 from shared_models.models import Tender, TenderApplication
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
+import json
 
 def home(request):
     #if not request.user.is_authenticated:
@@ -201,9 +204,8 @@ def apply_to_tender(request, tender_id):
             application.applicant = company
             application.save()
             
-            # Start the TenderApplicationFlow
-            from app1.flows import TenderApplicationFlow
-            process = TenderApplicationFlow.start_noninteractive.run(application_id=application.id)
+            # Note: TenderApplicationFlow from app1 has been removed
+            # Application submitted successfully without workflow integration
             
             messages.success(request, 'Your application has been submitted successfully!')
             return redirect('app2:tender_list')
@@ -225,16 +227,8 @@ def my_applications(request):
         # Get all applications submitted by this company
         applications = TenderApplication.objects.filter(applicant=company).order_by('-submitted_at')
         
-        # Get associated process information if available
-        from app1.models import TenderApplicationProcess
-        
-        # Add process info to applications
-        for application in applications:
-            try:
-                process = TenderApplicationProcess.objects.filter(application=application).first()
-                application.process = process
-            except TenderApplicationProcess.DoesNotExist:
-                application.process = None
+        # Note: TenderApplicationProcess from app1 has been removed
+        # Applications will show without process information
         
     except Exception as e:
         messages.error(request, f'Error retrieving your applications: {str(e)}')
@@ -262,4 +256,109 @@ def faq(request):
     return render(request, 'app2/faq.html')
 
 def help(request):
-    return render(request, 'app2/help.html') 
+    return render(request, 'app2/help.html')
+
+@login_required
+def oracle_dashboard(request):
+    """Oracle database dashboard view."""
+    context = {
+        'page_title': 'Oracle Database Dashboard'
+    }
+    return render(request, 'app2/oracle/dashboard.html', context)
+
+@login_required
+def oracle_test_connection(request):
+    """Test Oracle database connection."""
+    try:
+        is_connected = test_oracle_connection()
+        if is_connected:
+            messages.success(request, 'Oracle database connection successful!')
+        else:
+            messages.error(request, 'Oracle database connection failed!')
+    except Exception as e:
+        messages.error(request, f'Error testing Oracle connection: {str(e)}')
+    
+    return redirect('app2:oracle_dashboard')
+
+@login_required
+def oracle_tables(request):
+    """List all Oracle tables."""
+    try:
+        tables = get_oracle_tables()
+        context = {
+            'tables': tables,
+            'page_title': 'Oracle Tables'
+        }
+        return render(request, 'app2/oracle/tables.html', context)
+    except Exception as e:
+        messages.error(request, f'Error retrieving Oracle tables: {str(e)}')
+        return redirect('app2:oracle_dashboard')
+
+@login_required
+def oracle_table_info(request, table_name):
+    """Get detailed information about a specific Oracle table."""
+    try:
+        table_info = get_oracle_table_info(table_name)
+        context = {
+            'table_name': table_name,
+            'table_info': table_info,
+            'page_title': f'Table Info: {table_name}'
+        }
+        return render(request, 'app2/oracle/table_info.html', context)
+    except Exception as e:
+        messages.error(request, f'Error retrieving table info for {table_name}: {str(e)}')
+        return redirect('app2:oracle_tables')
+
+@login_required
+def oracle_query_interface(request):
+    """Interface for executing custom Oracle queries."""
+    if request.method == 'POST':
+        query = request.POST.get('query', '').strip()
+        if query:
+            try:
+                # Only allow SELECT queries for security
+                if not query.upper().startswith('SELECT'):
+                    messages.error(request, 'Only SELECT queries are allowed for security reasons.')
+                    return render(request, 'app2/oracle/query_interface.html', {'query': query})
+                
+                results = execute_oracle_query(query)
+                context = {
+                    'query': query,
+                    'results': results,
+                    'page_title': 'Oracle Query Results'
+                }
+                return render(request, 'app2/oracle/query_results.html', context)
+            except Exception as e:
+                messages.error(request, f'Error executing query: {str(e)}')
+                return render(request, 'app2/oracle/query_interface.html', {'query': query})
+        else:
+            messages.error(request, 'Please enter a query.')
+    
+    return render(request, 'app2/oracle/query_interface.html')
+
+@login_required
+@require_http_methods(["POST"])
+def oracle_query_ajax(request):
+    """AJAX endpoint for executing Oracle queries."""
+    try:
+        data = json.loads(request.body)
+        query = data.get('query', '').strip()
+        
+        if not query:
+            return JsonResponse({'error': 'Query is required'}, status=400)
+        
+        # Only allow SELECT queries for security
+        if not query.upper().startswith('SELECT'):
+            return JsonResponse({'error': 'Only SELECT queries are allowed'}, status=400)
+        
+        results = execute_oracle_query(query)
+        return JsonResponse({
+            'success': True,
+            'results': results,
+            'count': len(results)
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500) 

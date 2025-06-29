@@ -1,0 +1,238 @@
+{% extends 'app2/base.html' %}
+{% load static %}
+
+{% block title %}Oracle Tables{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'app2:oracle_dashboard' %}">Oracle Dashboard</a></li>
+                    <li class="breadcrumb-item active">Tables</li>
+                </ol>
+            </nav>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-table"></i> Oracle Tables</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Search Box -->
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="table-search" placeholder="Search tables...">
+                            <div class="input-group-append">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tables Count -->
+                    <div class="mb-3">
+                        <span class="badge badge-info" id="table-count">{{ tables|length }} table(s) found</span>
+                        <a href="{% url 'app2:oracle_dashboard' %}" class="btn btn-sm btn-secondary ml-2">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                    
+                    <!-- Tables List -->
+                    {% if tables %}
+                        <div class="row" id="tables-container">
+                            {% for table in tables %}
+                                <div class="col-md-6 col-lg-4 mb-3 table-item">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">
+                                                <i class="fas fa-table text-primary"></i>
+                                                {{ table }}
+                                            </h5>
+                                            <div class="btn-group btn-group-sm w-100" role="group">
+                                                <a href="{% url 'app2:oracle_table_info' table %}" class="btn btn-outline-info">
+                                                    <i class="fas fa-info-circle"></i> Info
+                                                </a>
+                                                <button class="btn btn-outline-success" onclick="queryTable('{{ table }}')">
+                                                    <i class="fas fa-search"></i> Query
+                                                </button>
+                                                <button class="btn btn-outline-primary" onclick="selectFromTable('{{ table }}')">
+                                                    <i class="fas fa-play"></i> Select *
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No tables found in the database.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Query Modal -->
+<div class="modal fade" id="queryModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Query Table: <span id="modal-table-name"></span></h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="query-form">
+                    <div class="form-group">
+                        <label for="modal-query">SQL Query:</label>
+                        <textarea class="form-control" id="modal-query" rows="6"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Execute Query
+                    </button>
+                </form>
+                <div id="query-results" class="mt-3" style="display: none;">
+                    <h6>Results:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped" id="results-table">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('table-search').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const tableItems = document.querySelectorAll('.table-item');
+    let visibleCount = 0;
+    
+    tableItems.forEach(item => {
+        const tableName = item.querySelector('.card-title').textContent.toLowerCase();
+        if (tableName.includes(searchTerm)) {
+            item.style.display = 'block';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('table-count').textContent = `${visibleCount} table(s) found`;
+});
+
+function queryTable(tableName) {
+    document.getElementById('modal-table-name').textContent = tableName;
+    document.getElementById('modal-query').value = `SELECT * FROM ${tableName} WHERE ROWNUM <= 10`;
+    document.getElementById('query-results').style.display = 'none';
+    $('#queryModal').modal('show');
+}
+
+function selectFromTable(tableName) {
+    // Create a form and submit to query interface
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "app2:oracle_query_interface" %}';
+    
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = 'csrfmiddlewaretoken';
+    csrfToken.value = '{{ csrf_token }}';
+    
+    const queryInput = document.createElement('input');
+    queryInput.type = 'hidden';
+    queryInput.name = 'query';
+    queryInput.value = `SELECT * FROM ${tableName} WHERE ROWNUM <= 100`;
+    
+    form.appendChild(csrfToken);
+    form.appendChild(queryInput);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Handle modal query form
+document.getElementById('query-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const query = document.getElementById('modal-query').value.trim();
+    if (!query) return;
+    
+    // Show loading
+    const resultsDiv = document.getElementById('query-results');
+    resultsDiv.style.display = 'block';
+    resultsDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Executing query...</div>';
+    
+    // Execute query via AJAX
+    fetch('{% url "app2:oracle_query_ajax" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ query: query })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayResults(data.results);
+        } else {
+            resultsDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+        }
+    })
+    .catch(error => {
+        resultsDiv.innerHTML = `<div class="alert alert-danger">Error executing query: ${error}</div>`;
+    });
+});
+
+function displayResults(results) {
+    const resultsDiv = document.getElementById('query-results');
+    const table = document.getElementById('results-table');
+    
+    if (results.length === 0) {
+        resultsDiv.innerHTML = '<div class="alert alert-info">No results returned.</div>';
+        return;
+    }
+    
+    // Build table headers
+    const thead = table.querySelector('thead');
+    const tbody = table.querySelector('tbody');
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    
+    const headerRow = document.createElement('tr');
+    Object.keys(results[0]).forEach(key => {
+        const th = document.createElement('th');
+        th.textContent = key;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    
+    // Build table rows (limit to first 10 for modal display)
+    const limitedResults = results.slice(0, 10);
+    limitedResults.forEach(row => {
+        const tr = document.createElement('tr');
+        Object.values(row).forEach(value => {
+            const td = document.createElement('td');
+            td.textContent = value === null ? 'NULL' : value;
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    
+    if (results.length > 10) {
+        const note = document.createElement('div');
+        note.className = 'alert alert-info mt-2';
+        note.innerHTML = `<i class="fas fa-info-circle"></i> Showing first 10 of ${results.length} results. Use the Query Interface for full results.`;
+        resultsDiv.appendChild(note);
+    }
+}
+</script>
+{% endblock %} 

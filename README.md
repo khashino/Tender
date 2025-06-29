@@ -42,3 +42,8 @@ python manage.py runserver
 The applications will be available at:
 - App1: http://localhost:8000/app1/
 - App2: http://localhost:8000/app2/ 
+
+
+
+
+python manage.py test_oracle --query "SELECT * FROM your_table WHERE rownum <= 10"

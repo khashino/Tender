@@ -22,4 +22,12 @@ urlpatterns = [
     path('rules/', views.rules, name='rules'),
     path('faq/', views.faq, name='faq'),
     path('help/', views.help, name='help'),
+    
+    # Oracle database views
+    path('oracle/', views.oracle_dashboard, name='oracle_dashboard'),
+    path('oracle/test-connection/', views.oracle_test_connection, name='oracle_test_connection'),
+    path('oracle/tables/', views.oracle_tables, name='oracle_tables'),
+    path('oracle/table/<str:table_name>/', views.oracle_table_info, name='oracle_table_info'),
+    path('oracle/query/', views.oracle_query_interface, name='oracle_query_interface'),
+    path('oracle/query/ajax/', views.oracle_query_ajax, name='oracle_query_ajax'),
 ] 

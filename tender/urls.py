@@ -7,13 +7,8 @@ from viewflow.contrib.auth import AuthViewset
 from viewflow.urls import Application, Site, ModelViewset
 from viewflow.workflow.flow import FlowAppViewset
 
-from app1.flows import TenderApplicationFlow
-
-
-
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('app1/', include('app1.urls')),
     path('app2/', include('app2.urls')),
 ]
 

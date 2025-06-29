@@ -16,7 +16,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app1',
     'app2',
     'shared_models',
     'viewflow',
@@ -59,6 +58,13 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+    },
+    'oracle': {
+        'ENGINE': 'django.db.backends.oracle',
+        'NAME': '192.168.7.93:1522/FREEPDB1',
+        'USER': 'NAK',
+        'PASSWORD': '78007625645_Kh',
+        'OPTIONS': {},
     }
 }
 
@@ -87,13 +93,11 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom user models
-AUTH_USER_MODEL = 'app1.App1User'
-AUTH_USER_MODEL_APP2 = 'app2.App2User'
+# Custom user model - now using app2 as main app
+AUTH_USER_MODEL = 'app2.App2User'
 
-# Authentication backends
+# Authentication backends - now using only app2
 AUTHENTICATION_BACKENDS = [
-    'app1.auth_backend.App1AuthBackend',
     'app2.auth_backend.App2AuthBackend',
 ]
 
