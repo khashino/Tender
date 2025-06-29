@@ -8,9 +8,9 @@ from django.http import HttpResponse, FileResponse, JsonResponse
 from django.conf import settings
 import os
 from .models import App2User, Company, CompanyDocument, Announcement, LatestNews, Notification, Message
-from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm, TenderApplicationForm
+from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm, TenderApplicationForm, OracleUserRegistrationForm
 from .auth_backend import App2AuthBackend, OracleUser
-from .oracle_utils import execute_oracle_query, test_oracle_connection, get_oracle_tables, get_oracle_table_info
+from .oracle_utils import execute_oracle_query, test_oracle_connection, get_oracle_tables, get_oracle_table_info, create_oracle_user
 from shared_models.models import Tender, TenderApplication
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
@@ -87,20 +87,62 @@ def login_view(request):
     return render(request, 'app2/login.html')
 
 def register(request):
-    if request.user.is_authenticated and isinstance(request.user, App2User):
+    """Oracle user registration view"""
+    if request.user.is_authenticated:
         return redirect('app2:home')
         
     if request.method == 'POST':
-        form = App2UserCreationForm(request.POST)
+        form = OracleUserRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user, backend='app2.auth_backend.App2AuthBackend')
-            messages.success(request, 'Registration successful!')
-            return redirect('app2:settings')
+            try:
+                # Prepare user data for Oracle insertion
+                user_data = {
+                    'name': form.cleaned_data['name'],
+                    'family': form.cleaned_data['family'],
+                    'user_name': form.cleaned_data['user_name'],
+                    'password': form.cleaned_data['password'],
+                    'phone_number': form.cleaned_data.get('phone_number'),
+                    'address': form.cleaned_data.get('address'),
+                    'group_id': 1,  # Default group ID
+                    'vendor_id': None  # Default vendor ID (null)
+                }
+                
+                # Create user in Oracle database
+                created_user_data = create_oracle_user(user_data)
+                
+                if created_user_data:
+                    # Create OracleUser instance
+                    oracle_user = OracleUser(created_user_data)
+                    
+                    # Log the user in manually (similar to login view)
+                    from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, HASH_SESSION_KEY
+                    
+                    # Clear any existing session data
+                    request.session.flush()
+                    
+                    # Store the user ID (integer) and backend path
+                    request.session[SESSION_KEY] = oracle_user.pk
+                    request.session[BACKEND_SESSION_KEY] = 'app2.auth_backend.OracleAuthBackend'
+                    request.session[HASH_SESSION_KEY] = oracle_user.get_session_auth_hash()
+                    
+                    # Ensure session is saved
+                    request.session.save()
+                    
+                    # Set the user on the request
+                    request.user = oracle_user
+                    
+                    messages.success(request, f'ثبت‌نام با موفقیت انجام شد! خوش آمدید، {oracle_user.get_full_name()}!')
+                    return redirect('app2:home')
+                else:
+                    messages.error(request, 'خطا در ثبت‌نام. لطفاً دوباره تلاش کنید.')
+                    
+            except Exception as e:
+                messages.error(request, f'خطا در ثبت‌نام: {str(e)}')
         else:
-            messages.error(request, 'Please correct the errors below.')
+            messages.error(request, 'لطفاً خطاهای فرم را اصلاح کنید.')
     else:
-        form = App2UserCreationForm()
+        form = OracleUserRegistrationForm()
+    
     return render(request, 'app2/register.html', {'form': form})
 
 def logout_view(request):

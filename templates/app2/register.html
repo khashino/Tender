@@ -9,12 +9,14 @@
             <div class="card">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
-                        <i class="bi bi-person-plus display-4 text-primary mb-3"></i>
+                        <img src="/static/images/nak-logo.png" alt="NAK Logo" class="img-fluid mb-3" style="max-width: 120px;">
                         <h2 class="card-title">ثبت‌نام در پنل مدیریت مناقصات</h2>
                         <p class="text-muted">لطفاً اطلاعات خود را برای ثبت‌نام وارد کنید</p>
                     </div>
+                    
                     <form method="post" class="needs-validation" novalidate>
                         {% csrf_token %}
+                        
                         {% if form.errors %}
                             <div class="alert alert-danger">
                                 <i class="bi bi-exclamation-triangle me-2"></i>
@@ -28,81 +30,124 @@
                                 </ul>
                             </div>
                         {% endif %}
+                        
                         <div class="row">
                             <div class="col-md-6 mb-4">
-                                <label for="id_username" class="form-label">نام کاربری</label>
+                                <label for="id_name" class="form-label">{{ form.name.label }}</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
                                         <i class="bi bi-person"></i>
                                     </span>
-                                    <input type="text" name="username" id="id_username" class="form-control" required>
+                                    {{ form.name }}
                                 </div>
-                                <div class="form-text">نام کاربری باید بین ۳ تا ۱۵۰ کاراکتر باشد</div>
+                                {% if form.name.errors %}
+                                    <div class="form-text text-danger">
+                                        {% for error in form.name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
+                            
                             <div class="col-md-6 mb-4">
-                                <label for="id_email" class="form-label">ایمیل</label>
+                                <label for="id_family" class="form-label">{{ form.family.label }}</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
-                                        <i class="bi bi-envelope"></i>
+                                        <i class="bi bi-person"></i>
                                     </span>
-                                    <input type="email" name="email" id="id_email" class="form-control" required>
+                                    {{ form.family }}
                                 </div>
+                                {% if form.family.errors %}
+                                    <div class="form-text text-danger">
+                                        {% for error in form.family.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
+                        
                         <div class="row">
                             <div class="col-md-6 mb-4">
-                                <label for="id_password1" class="form-label">رمز عبور</label>
+                                <label for="id_user_name" class="form-label">{{ form.user_name.label }}</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
-                                        <i class="bi bi-lock"></i>
+                                        <i class="bi bi-person-circle"></i>
                                     </span>
-                                    <input type="password" name="password1" id="id_password1" class="form-control" required>
+                                    {{ form.user_name }}
                                 </div>
-                                <div class="form-text">رمز عبور باید حداقل ۸ کاراکتر باشد</div>
+                                <div class="form-text">نام کاربری باید منحصر به فرد باشد</div>
+                                {% if form.user_name.errors %}
+                                    <div class="form-text text-danger">
+                                        {% for error in form.user_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
+                            
                             <div class="col-md-6 mb-4">
-                                <label for="id_password2" class="form-label">تکرار رمز عبور</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="bi bi-lock"></i>
-                                    </span>
-                                    <input type="password" name="password2" id="id_password2" class="form-control" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label for="id_company_name" class="form-label">نام شرکت</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="bi bi-building"></i>
-                                    </span>
-                                    <input type="text" name="company_name" id="id_company_name" class="form-control" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label for="id_phone" class="form-label">شماره تماس</label>
+                                <label for="id_phone_number" class="form-label">{{ form.phone_number.label }}</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
                                         <i class="bi bi-telephone"></i>
                                     </span>
-                                    <input type="tel" name="phone" id="id_phone" class="form-control" required>
+                                    {{ form.phone_number }}
                                 </div>
+                                {% if form.phone_number.errors %}
+                                    <div class="form-text text-danger">
+                                        {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="id_password" class="form-label">{{ form.password.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-lock"></i>
+                                    </span>
+                                    {{ form.password }}
+                                </div>
+                                <div class="form-text">رمز عبور باید حداقل ۸ کاراکتر باشد</div>
+                                {% if form.password.errors %}
+                                    <div class="form-text text-danger">
+                                        {% for error in form.password.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <label for="id_password_confirm" class="form-label">{{ form.password_confirm.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-lock-fill"></i>
+                                    </span>
+                                    {{ form.password_confirm }}
+                                </div>
+                                {% if form.password_confirm.errors %}
+                                    <div class="form-text text-danger">
+                                        {% for error in form.password_confirm.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
                         <div class="mb-4">
-                            <label for="id_address" class="form-label">آدرس</label>
+                            <label for="id_address" class="form-label">{{ form.address.label }}</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="bi bi-geo-alt"></i>
                                 </span>
-                                <textarea name="address" id="id_address" class="form-control" rows="3" required></textarea>
+                                {{ form.address }}
                             </div>
+                            {% if form.address.errors %}
+                                <div class="form-text text-danger">
+                                    {% for error in form.address.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
+                        
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="bi bi-person-plus me-2"></i>
-                                ثبت‌نام
+                                ثبت‌نام در سیستم
                             </button>
                             <a href="{% url 'app2:login' %}" class="btn btn-outline-primary">
                                 <i class="bi bi-box-arrow-in-right me-2"></i>
@@ -115,4 +160,35 @@
         </div>
     </div>
 </div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Password confirmation validation
+document.getElementById('id_password_confirm').addEventListener('input', function() {
+    var password = document.getElementById('id_password').value;
+    var confirmPassword = this.value;
+    
+    if (password !== confirmPassword) {
+        this.setCustomValidity('رمزهای عبور مطابقت ندارند');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+</script>
 {% endblock %} 

@@ -178,4 +178,91 @@ def get_oracle_table_info(table_name: str) -> List[Dict[str, Any]]:
         List of dictionaries containing column information
     """
     executor = OracleQueryExecutor()
-    return executor.get_table_info(table_name) 
+    return executor.get_table_info(table_name)
+
+
+def create_oracle_user(user_data):
+    """
+    Create a new user in the Oracle KRN_USER_DETAIL table
+    
+    Args:
+        user_data (dict): Dictionary containing user information
+        
+    Returns:
+        dict: The created user data with USER_ID, or None if failed
+    """
+    try:
+        # Insert query for KRN_USER_DETAIL table with RETURNING clause
+        # USER_ID is auto-generated, so we don't include it in INSERT
+        insert_query = """
+        INSERT INTO KRN_USER_DETAIL (
+            NAME, FAMILY, USER_NAME, PASSWORD, PHONE_NUMBER, 
+            ADDRESS, GROUP_ID, DASHBOARD_TYPE, IS_ACTIVE, 
+            CREATED_DATE, VENDOR_ID
+        ) VALUES (
+            %s, %s, %s, %s, %s, 
+            %s, %s, %s, %s, 
+            SYSDATE, %s
+        )
+        """
+        
+        # Prepare parameters
+        params = [
+            user_data.get('name'),
+            user_data.get('family'),
+            user_data.get('user_name'),
+            user_data.get('password'),
+            user_data.get('phone_number'),
+            user_data.get('address'),
+            user_data.get('group_id', 1),  # Default to group 1
+            'Public',  # Default dashboard type
+            1,  # IS_ACTIVE = 1 (active)
+            user_data.get('vendor_id')
+        ]
+        
+        # Execute insert and get the new user
+        with connections['oracle'].cursor() as cursor:
+            cursor.execute(insert_query, params)
+            
+            # Commit the transaction
+            cursor.execute("COMMIT")
+            
+            # Get the newly created user by username
+            select_query = """
+            SELECT a.ADDRESS, a.CREATED_DATE, a.DASHBOARD_TYPE, a.FAMILY,
+                   a.GROUP_ID, a.IS_ACTIVE, a.NAME, a.PASSWORD,
+                   a.PHONE_NUMBER, a.USER_ID, a.USER_NAME, a.VENDOR_ID
+              FROM KRN_USER_DETAIL a
+             WHERE UPPER(a.USER_NAME) = UPPER(%s)
+               AND a.IS_ACTIVE = 1
+             ORDER BY a.USER_ID DESC
+            """
+            
+            result = execute_oracle_query(select_query, [user_data.get('user_name')])
+            if result:
+                return result[0]  # Return the first (newest) record
+            
+        return None
+        
+    except Exception as e:
+        logger.error(f"Error creating Oracle user: {str(e)}")
+        return None
+
+
+def check_username_exists(username):
+    """
+    Check if a username already exists in the Oracle KRN_USER_DETAIL table
+    
+    Args:
+        username (str): Username to check
+        
+    Returns:
+        bool: True if username exists, False otherwise
+    """
+    try:
+        query = "SELECT COUNT(*) as count FROM KRN_USER_DETAIL WHERE UPPER(user_name) = UPPER(%s)"
+        result = execute_oracle_query(query, [username])
+        return result and result[0]['COUNT'] > 0
+    except Exception as e:
+        logger.error(f"Error checking username existence: {str(e)}")
+        return False 
