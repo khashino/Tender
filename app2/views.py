@@ -8,10 +8,10 @@ from django.http import HttpResponse, FileResponse, JsonResponse
 from django.conf import settings
 import os
 from .models import App2User, Company, CompanyDocument, Announcement, LatestNews, Notification, Message
-from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm, TenderApplicationForm, OracleUserRegistrationForm
+from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm, OracleUserRegistrationForm, OracleVendorForm
 from .auth_backend import App2AuthBackend, OracleUser
-from .oracle_utils import execute_oracle_query, test_oracle_connection, get_oracle_tables, get_oracle_table_info, create_oracle_user
-from shared_models.models import Tender, TenderApplication
+from .oracle_utils import execute_oracle_query, test_oracle_connection, get_oracle_tables, get_oracle_table_info, create_oracle_user, create_vendor, update_user_vendor_id, get_vendor_by_id
+# from shared_models.models import Tender, TenderApplication  # Commented out to remove dependency
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 import json
@@ -23,12 +23,12 @@ def home(request):
     # Get the latest announcements, news and tenders
     announcements = Announcement.objects.filter(is_active=True).order_by('-created_at')[:5]
     latest_news = LatestNews.objects.filter(is_active=True).order_by('-created_at')[:5]
-    latest_tenders = Tender.objects.all().order_by('-published_date')[:5]
+    # latest_tenders = Tender.objects.all().order_by('-published_date')[:5]  # Commented out due to dependency
     
     context = {
         'announcements': announcements,
         'latest_news': latest_news,
-        'latest_tenders': latest_tenders,
+        # 'latest_tenders': latest_tenders,  # Commented out due to dependency
     }
     return render(request, 'app2/home.html', context)
 
@@ -152,6 +152,100 @@ def logout_view(request):
 
 @login_required
 def settings(request):
+    """Settings view that works with both Django users and Oracle users"""
+    
+    # Check if user is Oracle user or Django user
+    if isinstance(request.user, OracleUser):
+        # Handle Oracle user with vendor/company information
+        return oracle_user_settings(request)
+    else:
+        # Handle Django user with Company model (existing functionality)
+        return django_user_settings(request)
+
+def oracle_user_settings(request):
+    """Settings for Oracle users with vendor/company management"""
+    user = request.user
+    company = user.company  # This will fetch from KRNR_VENDOR table
+    
+    if request.method == 'POST':
+        # Determine if we're creating a new vendor or updating existing one
+        vendor_data = None
+        if company and company.vendor_id:
+            # Get existing vendor data for form initialization
+            vendor_data = get_vendor_by_id(company.vendor_id)
+        
+        form = OracleVendorForm(request.POST, vendor_data=vendor_data)
+        if form.is_valid():
+            try:
+                vendor_info = {
+                    'vendor_name': form.cleaned_data['vendor_name'],
+                    'registration_number': form.cleaned_data.get('registration_number'),
+                    'address': form.cleaned_data.get('address'),
+                    'email': form.cleaned_data.get('email'),
+                    'phone_number': form.cleaned_data.get('phone_number')
+                }
+                
+                if company and company.vendor_id:
+                    # Update existing vendor
+                    update_query = """
+                    UPDATE KRNR_VENDOR 
+                    SET VENDOR_NAME = %s,
+                        REGISTRATION_NUMBER = %s,
+                        ADDRESS = %s,
+                        EMAIL = %s,
+                        PHONE_NUMBER = %s
+                    WHERE VENDOR_ID = %s
+                    """
+                    
+                    params = [
+                        vendor_info['vendor_name'],
+                        vendor_info['registration_number'],
+                        vendor_info['address'],
+                        vendor_info['email'],
+                        vendor_info['phone_number'],
+                        company.vendor_id
+                    ]
+                    
+                    execute_oracle_query(update_query, params)
+                    messages.success(request, 'اطلاعات شرکت با موفقیت بروزرسانی شد.')
+                else:
+                    # Create new vendor
+                    created_vendor = create_vendor(vendor_info)
+                    if created_vendor:
+                        # Update user's vendor_id
+                        vendor_id = created_vendor['VENDOR_ID']
+                        if update_user_vendor_id(user.user_id, vendor_id):
+                            # Refresh user's company data
+                            user._company = None
+                            user._company_loaded = False
+                            messages.success(request, 'اطلاعات شرکت با موفقیت ایجاد شد.')
+                        else:
+                            messages.error(request, 'خطا در اتصال شرکت به کاربر.')
+                    else:
+                        messages.error(request, 'خطا در ایجاد شرکت.')
+                
+                return redirect('app2:settings')
+                
+            except Exception as e:
+                messages.error(request, f'خطا در ذخیره اطلاعات شرکت: {str(e)}')
+    else:
+        # Initialize form with existing vendor data if available
+        vendor_data = None
+        if company and company.vendor_id:
+            vendor_data = get_vendor_by_id(company.vendor_id)
+        
+        form = OracleVendorForm(vendor_data=vendor_data)
+
+    context = {
+        'user': user,
+        'company': company,
+        'form': form,
+        'is_oracle_user': True,
+    }
+    return render(request, 'app2/oracle_settings.html', context)
+
+def django_user_settings(request):
+    """Settings for Django users with Company model (existing functionality)"""
     try:
         company = request.user.company
     except Company.DoesNotExist:
@@ -176,6 +270,7 @@ def settings(request):
         'form': form,
         'documents': documents,
         'document_form': document_form,
+        'is_oracle_user': False,
     }
     return render(request, 'app2/settings.html', context)
 

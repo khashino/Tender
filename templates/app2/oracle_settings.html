@@ -1,0 +1,278 @@
+{% extends 'app2/base.html' %}
+
+{% block title %}تنظیمات کاربری{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">منوی تنظیمات</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="#company-info" class="list-group-item list-group-item-action active" data-bs-toggle="tab">
+                        <i class="bi bi-building me-2"></i>اطلاعات شرکت
+                    </a>
+                    <a href="#user-info" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                        <i class="bi bi-person me-2"></i>اطلاعات کاربری
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- Company Information Tab -->
+                <div class="tab-pane fade show active" id="company-info">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-building me-2"></i>اطلاعات شرکت
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if company and company.vendor_id %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    شرکت شما با شناسه {{ company.vendor_id }} ثبت شده است.
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    شما هنوز اطلاعات شرکت خود را ثبت نکرده‌اید. لطفاً فرم زیر را تکمیل کنید.
+                                </div>
+                            {% endif %}
+                            
+                            <form method="post" class="needs-validation" novalidate>
+                                {% csrf_token %}
+                                
+                                {% if form.errors %}
+                                    <div class="alert alert-danger">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        لطفاً خطاهای زیر را اصلاح کنید:
+                                        <ul class="mb-0 mt-2">
+                                            {% for field, errors in form.errors.items %}
+                                                {% for error in errors %}
+                                                    <li>{{ error }}</li>
+                                                {% endfor %}
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_vendor_name" class="form-label">{{ form.vendor_name.label }} *</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-building"></i>
+                                            </span>
+                                            {{ form.vendor_name }}
+                                        </div>
+                                        {% if form.vendor_name.errors %}
+                                            <div class="form-text text-danger">
+                                                {% for error in form.vendor_name.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_registration_number" class="form-label">{{ form.registration_number.label }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-card-text"></i>
+                                            </span>
+                                            {{ form.registration_number }}
+                                        </div>
+                                        {% if form.registration_number.errors %}
+                                            <div class="form-text text-danger">
+                                                {% for error in form.registration_number.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_email" class="form-label">{{ form.email.label }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-envelope"></i>
+                                            </span>
+                                            {{ form.email }}
+                                        </div>
+                                        {% if form.email.errors %}
+                                            <div class="form-text text-danger">
+                                                {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_phone_number" class="form-label">{{ form.phone_number.label }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-telephone"></i>
+                                            </span>
+                                            {{ form.phone_number }}
+                                        </div>
+                                        {% if form.phone_number.errors %}
+                                            <div class="form-text text-danger">
+                                                {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_address" class="form-label">{{ form.address.label }}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-geo-alt"></i>
+                                        </span>
+                                        {{ form.address }}
+                                    </div>
+                                    {% if form.address.errors %}
+                                        <div class="form-text text-danger">
+                                            {% for error in form.address.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        {% if company and company.vendor_id %}
+                                            بروزرسانی اطلاعات
+                                        {% else %}
+                                            ثبت اطلاعات شرکت
+                                        {% endif %}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Information Tab -->
+                <div class="tab-pane fade" id="user-info">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person me-2"></i>اطلاعات کاربری
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">نام و نام خانوادگی</label>
+                                        <div class="form-control-plaintext">
+                                            {{ user.get_full_name|default:"نامشخص" }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">نام کاربری</label>
+                                        <div class="form-control-plaintext">
+                                            {{ user.username }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">شماره تماس</label>
+                                        <div class="form-control-plaintext">
+                                            {{ user.phone_number|default:"ثبت نشده" }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">شناسه کاربری</label>
+                                        <div class="form-control-plaintext">
+                                            {{ user.user_id }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">گروه</label>
+                                        <div class="form-control-plaintext">
+                                            {{ user.group_id|default:"نامشخص" }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">آدرس</label>
+                                        <div class="form-control-plaintext">
+                                            {{ user.address|default:"ثبت نشده" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if company and company.vendor_id %}
+                                <hr>
+                                <h6>اطلاعات شرکت</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">نام شرکت</label>
+                                            <div class="form-control-plaintext">
+                                                {{ company.name|default:"ثبت نشده" }}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">شناسه شرکت</label>
+                                            <div class="form-control-plaintext">
+                                                {{ company.vendor_id }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">شماره ثبت</label>
+                                            <div class="form-control-plaintext">
+                                                {{ company.registration_number|default:"ثبت نشده" }}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">ایمیل شرکت</label>
+                                            <div class="form-control-plaintext">
+                                                {{ company.email|default:"ثبت نشده" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+</script>
+{% endblock %} 

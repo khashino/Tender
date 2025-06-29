@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import App2User, Company, CompanyDocument
-from shared_models.models import TenderApplication
+# from shared_models.models import TenderApplication  # Commented out to remove dependency
 
 class App2UserCreationForm(UserCreationForm):
     class Meta:
@@ -109,6 +109,72 @@ class OracleUserRegistrationForm(forms.Form):
                 pass
         return user_name
 
+class OracleVendorForm(forms.Form):
+    """Form for creating/editing vendor information in Oracle KRNR_VENDOR table"""
+    
+    vendor_name = forms.CharField(
+        max_length=255,
+        label='نام شرکت',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'نام شرکت خود را وارد کنید',
+            'required': True
+        })
+    )
+    
+    registration_number = forms.CharField(
+        max_length=100,
+        label='شماره ثبت',
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'شماره ثبت شرکت'
+        })
+    )
+    
+    address = forms.CharField(
+        max_length=500,
+        label='آدرس',
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'آدرس شرکت'
+        })
+    )
+    
+    email = forms.EmailField(
+        max_length=255,
+        label='ایمیل',
+        required=False,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'ایمیل شرکت'
+        })
+    )
+    
+    phone_number = forms.CharField(
+        max_length=50,
+        label='شماره تماس',
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'شماره تماس شرکت'
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        self.vendor_data = kwargs.pop('vendor_data', None)
+        super().__init__(*args, **kwargs)
+        
+        # Pre-populate form if vendor_data is provided
+        if self.vendor_data:
+            self.fields['vendor_name'].initial = self.vendor_data.get('VENDOR_NAME')
+            self.fields['registration_number'].initial = self.vendor_data.get('REGISTRATION_NUMBER')
+            self.fields['address'].initial = self.vendor_data.get('ADDRESS')
+            self.fields['email'].initial = self.vendor_data.get('EMAIL')
+            self.fields['phone_number'].initial = self.vendor_data.get('PHONE_NUMBER')
+
 class App2AuthenticationForm(AuthenticationForm):
     def confirm_login_allowed(self, user):
         if not isinstance(user, App2User):
@@ -146,13 +212,14 @@ class CompanyDocumentForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
-class TenderApplicationForm(forms.ModelForm):
-    class Meta:
-        model = TenderApplication
-        fields = ['cover_letter', 'price_quote', 'proposal_document', 'additional_document']
-        widgets = {
-            'cover_letter': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
-            'price_quote': forms.NumberInput(attrs={'class': 'form-control'}),
-            'proposal_document': forms.FileInput(attrs={'class': 'form-control'}),
-            'additional_document': forms.FileInput(attrs={'class': 'form-control'}),
-        } 
+# Commented out due to shared_models dependency
+# class TenderApplicationForm(forms.ModelForm):
+#     class Meta:
+#         model = TenderApplication
+#         fields = ['cover_letter', 'price_quote', 'proposal_document', 'additional_document']
+#         widgets = {
+#             'cover_letter': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+#             'price_quote': forms.NumberInput(attrs={'class': 'form-control'}),
+#             'proposal_document': forms.FileInput(attrs={'class': 'form-control'}),
+#             'additional_document': forms.FileInput(attrs={'class': 'form-control'}),
+#         } 

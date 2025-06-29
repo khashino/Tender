@@ -1,6 +1,6 @@
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import AnonymousUser
-from app2.oracle_utils import execute_oracle_query
+from app2.oracle_utils import execute_oracle_query, get_vendor_by_id
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,6 +17,30 @@ class OracleUserMeta:
     
     def __init__(self):
         self.pk = OracleUserPK()
+
+
+class OracleVendor:
+    """Represents a vendor/company from KRNR_VENDOR table"""
+    
+    def __init__(self, vendor_data):
+        if vendor_data:
+            self.vendor_id = vendor_data.get('VENDOR_ID')
+            self.name = vendor_data.get('VENDOR_NAME')
+            self.registration_number = vendor_data.get('REGISTRATION_NUMBER')
+            self.address = vendor_data.get('ADDRESS')
+            self.email = vendor_data.get('EMAIL')
+            self.phone = vendor_data.get('PHONE_NUMBER')
+        else:
+            # Default values when no vendor data is available
+            self.vendor_id = None
+            self.name = None
+            self.registration_number = None
+            self.address = None
+            self.email = None
+            self.phone = None
+    
+    def __str__(self):
+        return self.name or f"Vendor {self.vendor_id}"
 
 
 class OracleUser:
@@ -42,6 +66,10 @@ class OracleUser:
         self.dashboard_type = user_data.get('DASHBOARD_TYPE')
         self.created_date = user_data.get('CREATED_DATE')
         
+        # Cache for vendor/company data
+        self._company = None
+        self._company_loaded = False
+        
         # USER_ID is the primary key from Oracle - ensure it's properly handled
         # Since USER_ID is GENERATED ALWAYS AS IDENTITY, it should always be a valid integer
         if self.user_id is not None:
@@ -64,6 +92,22 @@ class OracleUser:
         
         # Add _state attribute for Django compatibility
         self._state = type('obj', (object,), {'adding': False, 'db': None})()
+    
+    @property
+    def company(self):
+        """Get the vendor/company associated with this user"""
+        if not self._company_loaded:
+            if self.vendor_id:
+                try:
+                    vendor_data = get_vendor_by_id(self.vendor_id)
+                    self._company = OracleVendor(vendor_data)
+                except Exception as e:
+                    logger.error(f"Error loading vendor data for user {self.user_id}: {str(e)}")
+                    self._company = OracleVendor(None)
+            else:
+                self._company = OracleVendor(None)
+            self._company_loaded = True
+        return self._company
     
     @property
     def is_authenticated(self):
