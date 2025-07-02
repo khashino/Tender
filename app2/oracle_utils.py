@@ -165,7 +165,7 @@ def execute_oracle_query(query: str, params: Optional[List] = None) -> List[Dict
         # Convert to list of dictionaries
         result_list = []
         for row in results:
-            row_dict = dict(zip(columns, row))
+            row_dict = _convert_oracle_row_to_dict(columns, row)
             result_list.append(row_dict)
         
         logger.info(f"Query executed successfully. Returned {len(result_list)} rows.")
@@ -559,7 +559,7 @@ def get_oracle_user_messages(user_id, limit=5):
         if results:
             columns = [desc[0] for desc in cursor.description]
             for row in results:
-                message_dict = dict(zip(columns, row))
+                message_dict = _convert_oracle_row_to_dict(columns, row)
                 messages.append(message_dict)
         
         return messages
@@ -672,7 +672,7 @@ def get_oracle_notifications(group_id=None, limit=5):
         if results:
             columns = [desc[0] for desc in cursor.description]
             for row in results:
-                notif_dict = dict(zip(columns, row))
+                notif_dict = _convert_oracle_row_to_dict(columns, row)
                 notifications.append(notif_dict)
         
         return notifications
@@ -886,7 +886,7 @@ def get_oracle_announcements(group_id=None, limit=5):
         if results:
             columns = [desc[0] for desc in cursor.description]
             for row in results:
-                announcement_dict = dict(zip(columns, row))
+                announcement_dict = _convert_oracle_row_to_dict(columns, row)
                 announcements.append(announcement_dict)
         
         return announcements
@@ -958,7 +958,7 @@ def get_oracle_latest_news(group_id=None, limit=5):
         if results:
             columns = [desc[0] for desc in cursor.description]
             for row in results:
-                news_dict = dict(zip(columns, row))
+                news_dict = _convert_oracle_row_to_dict(columns, row)
                 news_list.append(news_dict)
         
         return news_list
@@ -1185,4 +1185,30 @@ def create_oracle_news(title, content, image_url=None, group_id=None):
         if cursor:
             cursor.close()
         if connection:
-            connection.close() 
+            connection.close()
+
+def _convert_oracle_row_to_dict(columns, row):
+    """
+    Helper function to convert Oracle row data to dictionary,
+    handling CLOB fields properly by reading them while connection is active
+    
+    Args:
+        columns: List of column names
+        row: Row data from Oracle cursor
+        
+    Returns:
+        dict: Dictionary with column names as keys and converted values
+    """
+    result_dict = {}
+    for i, value in enumerate(row):
+        column_name = columns[i]
+        # Convert CLOB fields to strings while connection is active
+        if hasattr(value, 'read'):  # This is a CLOB
+            try:
+                result_dict[column_name] = value.read()
+            except Exception as e:
+                logger.warning(f"Error reading CLOB for column {column_name}: {str(e)}")
+                result_dict[column_name] = str(value) if value is not None else None
+        else:
+            result_dict[column_name] = value
+    return result_dict 
