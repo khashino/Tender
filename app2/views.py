@@ -24,6 +24,9 @@ from .oracle_utils import (
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 def home(request):
     #if not request.user.is_authenticated:
