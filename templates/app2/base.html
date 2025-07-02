@@ -28,6 +28,8 @@
                                 داشبورد
                             </a>
                         </li>
+                        
+                        {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link {% if 'tender-applications' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'app2:tender_applications' %}">
                                 <i class="bi bi-search"></i>
@@ -40,8 +42,6 @@
                                 <span>درخواست‌های من</span>
                             </a>
                         </li>
-                        {% if user.is_authenticated %}
-                     
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" href="{% url 'app2:settings' %}">
                                 <i class="bi bi-gear"></i>
