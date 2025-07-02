@@ -1,6 +1,6 @@
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import AnonymousUser
-from app2.oracle_utils import execute_oracle_query, get_vendor_by_id
+from app2.oracle_utils import execute_oracle_query, get_vendor_by_id, get_oracle_connection
 import logging
 
 logger = logging.getLogger(__name__)
@@ -185,6 +185,10 @@ class OracleAuthBackend(BaseBackend):
             return None
         
         try:
+            # Use direct oracledb connection instead of Django's database connections
+            connection = get_oracle_connection()
+            cursor = connection.cursor()
+            
             # Query Oracle database for user authentication
             query = """
             SELECT a.ADDRESS,
@@ -202,14 +206,18 @@ class OracleAuthBackend(BaseBackend):
               FROM KRN_USER_DETAIL a
              WHERE dashboard_type = 'Public' 
                AND is_active = 1
-               AND UPPER(user_name) = UPPER(%s) 
-               AND password = %s
+               AND UPPER(user_name) = UPPER(:1) 
+               AND password = :2
             """
             
-            results = execute_oracle_query(query, [username, password])
+            cursor.execute(query, [username, password])
+            results = cursor.fetchall()
             
             if results:
-                user_data = results[0]
+                # Get column names
+                columns = [col[0] for col in cursor.description]
+                user_data = dict(zip(columns, results[0]))
+                
                 logger.info(f"Oracle authentication successful for user: {username}")
                 return OracleUser(user_data)
             else:
@@ -219,6 +227,11 @@ class OracleAuthBackend(BaseBackend):
         except Exception as e:
             logger.error(f"Oracle authentication error: {str(e)}")
             return None
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'connection' in locals():
+                connection.close()
     
     def get_user(self, user_id):
         try:
@@ -228,6 +241,10 @@ class OracleAuthBackend(BaseBackend):
             except (ValueError, TypeError):
                 logger.error(f"Invalid user_id format: {user_id}")
                 return None
+            
+            # Use direct oracledb connection instead of Django's database connections
+            connection = get_oracle_connection()
+            cursor = connection.cursor()
             
             # Get user by USER_ID from Oracle
             query = """
@@ -244,15 +261,18 @@ class OracleAuthBackend(BaseBackend):
                    a.USER_NAME,
                    a.VENDOR_ID
               FROM KRN_USER_DETAIL a
-             WHERE user_id = %s 
+             WHERE user_id = :1 
                AND dashboard_type = 'Public' 
                AND is_active = 1
             """
             
-            results = execute_oracle_query(query, [user_id])
+            cursor.execute(query, [user_id])
+            results = cursor.fetchall()
             
             if results:
-                user_data = results[0]
+                # Get column names
+                columns = [col[0] for col in cursor.description]
+                user_data = dict(zip(columns, results[0]))
                 return OracleUser(user_data)
             else:
                 return None
@@ -260,6 +280,11 @@ class OracleAuthBackend(BaseBackend):
         except Exception as e:
             logger.error(f"Error getting Oracle user by ID {user_id}: {str(e)}")
             return None
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'connection' in locals():
+                connection.close()
 
 
 # Keep the old backend for backward compatibility

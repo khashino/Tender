@@ -139,17 +139,60 @@ def execute_oracle_query(query: str, params: Optional[List] = None) -> List[Dict
     Returns:
         List of dictionaries representing the query results
     """
-    executor = OracleQueryExecutor()
-    return executor.execute_select_query(query, params)
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        # Convert Django-style %s placeholders to Oracle :1, :2, etc.
+        if params:
+            # Replace %s with :1, :2, etc.
+            for i, param in enumerate(params, 1):
+                query = query.replace('%s', f':{i}', 1)
+        
+        logger.info(f"Executing Oracle query: {query}")
+        if params:
+            logger.info(f"Query parameters: {params}")
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+        
+        # Get column names
+        columns = [col[0] for col in cursor.description]
+        
+        # Fetch all results
+        results = cursor.fetchall()
+        
+        # Convert to list of dictionaries
+        result_list = []
+        for row in results:
+            row_dict = dict(zip(columns, row))
+            result_list.append(row_dict)
+        
+        logger.info(f"Query executed successfully. Returned {len(result_list)} rows.")
+        return result_list
+        
+    except Exception as e:
+        logger.error(f"Error executing Oracle query: {str(e)}")
+        logger.error(f"Query: {query}")
+        if params:
+            logger.error(f"Parameters: {params}")
+        raise
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals():
+            connection.close()
 
 
 def test_oracle_connection():
     """Test Oracle database connection"""
     try:
-        connection = connections['oracle']
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1 FROM DUAL")
-            cursor.fetchone()
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1 FROM DUAL")
+        cursor.fetchone()
+        cursor.close()
+        connection.close()
         return True, "Connection successful"
     except Exception as e:
         error_msg = f"Connection failed: {str(e)}"
@@ -222,7 +265,10 @@ def create_oracle_user(user_data):
         ]
         
         # Execute insert and get the new user
-        with connections['oracle'].cursor() as cursor:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        try:
             cursor.execute(insert_query, params)
             
             # Commit the transaction
@@ -234,14 +280,22 @@ def create_oracle_user(user_data):
                    a.GROUP_ID, a.IS_ACTIVE, a.NAME, a.PASSWORD,
                    a.PHONE_NUMBER, a.USER_ID, a.USER_NAME, a.VENDOR_ID
               FROM KRN_USER_DETAIL a
-             WHERE UPPER(a.USER_NAME) = UPPER(%s)
+             WHERE UPPER(a.USER_NAME) = UPPER(:1)
                AND a.IS_ACTIVE = 1
              ORDER BY a.USER_ID DESC
             """
             
-            result = execute_oracle_query(select_query, [user_data.get('user_name')])
-            if result:
-                return result[0]  # Return the first (newest) record
+            cursor.execute(select_query, [user_data.get('user_name')])
+            results = cursor.fetchall()
+            
+            if results:
+                # Get column names
+                columns = [col[0] for col in cursor.description]
+                user_data = dict(zip(columns, results[0]))
+                return user_data  # Return the first (newest) record
+        finally:
+            cursor.close()
+            connection.close()
             
         return None
         
@@ -261,12 +315,22 @@ def check_username_exists(username):
         bool: True if username exists, False otherwise
     """
     try:
-        query = "SELECT COUNT(*) as count FROM KRN_USER_DETAIL WHERE UPPER(user_name) = UPPER(%s)"
-        result = execute_oracle_query(query, [username])
-        return result and result[0]['COUNT'] > 0
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        query = "SELECT COUNT(*) as count FROM KRN_USER_DETAIL WHERE UPPER(user_name) = UPPER(:1)"
+        cursor.execute(query, [username])
+        result = cursor.fetchone()
+        
+        return result and result[0] > 0
     except Exception as e:
         logger.error(f"Error checking username existence: {str(e)}")
-        return False 
+        return False
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals():
+            connection.close() 
 
 def get_oracle_connection():
     """
@@ -277,7 +341,7 @@ def get_oracle_connection():
         oracle_config = settings.DATABASES.get('oracle', {})
         
         # Extract connection parameters
-        dsn = oracle_config.get('NAME', '192.168.7.93:1522/FREEPDB1')
+        dsn = oracle_config.get('NAME', '192.168.0.191:1522/FREEPDB1')
         user = oracle_config.get('USER', 'NAK')
         password = oracle_config.get('PASSWORD', '78007625645_Kh')
         

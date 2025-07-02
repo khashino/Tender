@@ -54,14 +54,14 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    },
-    'oracle': {
-        'ENGINE': 'django.db.backends.oracle',
-        'NAME': '192.168.0.191:1522/FREEPDB1',
-        'USER': 'NAK',
-        'PASSWORD': '78007625645_Kh',
-        'OPTIONS': {},
     }
+}
+
+# Oracle database configuration for direct oracledb connections
+ORACLE_CONFIG = {
+    'NAME': '192.168.0.191:1522/FREEPDB1',
+    'USER': 'NAK',
+    'PASSWORD': '78007625645_Kh',
 }
 
 AUTH_PASSWORD_VALIDATORS = [
