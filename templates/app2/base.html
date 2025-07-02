@@ -28,6 +28,12 @@
                                 داشبورد
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'tender_applications' %}active{% endif %}" href="{% url 'app2:tender_applications' %}">
+                                <i class="bi bi-file-text"></i>
+                                مناقصات باز
+                            </a>
+                        </li>
                         {% if user.is_authenticated %}
                      
                         <li class="nav-item">

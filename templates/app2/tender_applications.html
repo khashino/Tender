@@ -1,0 +1,254 @@
+{% extends 'app2/base.html' %}
+{% load tender_filters %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="bi bi-file-text me-2"></i>
+                        {{ page_title }}
+                    </h2>
+                    <p class="text-muted mb-0">مجموع {{ total_count }} مناقصه باز</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>
+                        به‌روزرسانی
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if error_message %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ error_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <!-- Tenders List -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list me-2"></i>
+                        لیست مناقصات باز
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if tenders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>شماره</th>
+                                        <th>عنوان مناقصه</th>
+                                        <th>تاریخ شروع</th>
+                                        <th>تاریخ پایان</th>
+                                        <th>مهلت ارسال</th>
+                                        <th>بودجه</th>
+                                        <th>وضعیت</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for tender in tenders %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-primary">#{{ tender.id }}</span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ tender.title }}</strong>
+                                            {% if tender.description %}
+                                            <br>
+                                            <small class="text-muted">
+                                                {{ tender.description|truncatewords:10 }}
+                                            </small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if tender.start_date %}
+                                                <small class="text-muted">
+                                                    {{ tender.start_date|date:"Y/m/d H:i" }}
+                                                </small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if tender.end_date %}
+                                                <small class="text-muted">
+                                                    {{ tender.end_date|date:"Y/m/d H:i" }}
+                                                </small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if tender.submission_deadline %}
+                                                <small class="text-danger">
+                                                    <i class="bi bi-clock me-1"></i>
+                                                    {{ tender.submission_deadline|date:"Y/m/d H:i" }}
+                                                </small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if tender.budget_amount %}
+                                                <span class="text-success">
+                                                    <i class="bi bi-currency-exchange me-1"></i>
+                                                    {{ tender.budget_amount|floatformat:0 }} {{ tender.currency }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">نامشخص</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">{{ tender.status }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{% url 'app2:tender_detail' tender.id %}" 
+                                                   class="btn btn-outline-primary">
+                                                    <i class="bi bi-eye me-1"></i>
+                                                    مشاهده
+                                                </a>
+                                                <button type="button" class="btn btn-outline-success" 
+                                                        onclick="applyToTender({{ tender.id }})">
+                                                    <i class="bi bi-file-earmark-plus me-1"></i>
+                                                    درخواست
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <h5 class="mt-3 text-muted">هیچ مناقصه بازی موجود نیست</h5>
+                            <p class="text-muted">در حال حاضر مناقصه‌ای با وضعیت باز وجود ندارد.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    {% if tenders %}
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ total_count }}</h4>
+                            <p class="mb-0">مناقصات باز</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-file-text display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ tenders|length }}</h4>
+                            <p class="mb-0">نمایش داده شده</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-list display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">0</h4>
+                            <p class="mb-0">نزدیک به پایان</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-clock display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">0</h4>
+                            <p class="mb-0">دارای بودجه</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-currency-exchange display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function applyToTender(tenderId) {
+    // Placeholder for tender application functionality
+    alert('قابلیت درخواست شرکت در مناقصه به زودی اضافه خواهد شد.\nشماره مناقصه: ' + tenderId);
+}
+</script>
+
+<style>
+.table th {
+    background-color: #f8f9fa;
+    border-top: none;
+    font-weight: 600;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+</style>
+{% endblock %} 

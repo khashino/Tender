@@ -1211,4 +1211,148 @@ def _convert_oracle_row_to_dict(columns, row):
                 result_dict[column_name] = str(value) if value is not None else None
         else:
             result_dict[column_name] = value
-    return result_dict 
+    return result_dict
+
+def get_oracle_open_tenders(limit=20):
+    """
+    Get open tender applications from KRNR_TENDER table
+    
+    Args:
+        limit (int): Maximum number of tenders to return
+        
+    Returns:
+        list: List of open tender dictionaries
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        query = """
+        SELECT TENDER_ID,
+               TENDER_TITLE,
+               TENDER_DESCRIPTION,
+               CATEGORY_ID,
+               START_DATE,
+               END_DATE,
+               SUBMISSION_DEADLINE,
+               BUDGET_AMOUNT,
+               CURRENCY,
+               STATUS,
+               CREATED_BY_USER_ID,
+               CREATED_DATE
+          FROM KRNR_TENDER
+         WHERE UPPER(STATUS) = 'OPEN'
+         ORDER BY CREATED_DATE DESC
+         FETCH FIRST :1 ROWS ONLY
+        """
+        
+        cursor.execute(query, [limit])
+        results = cursor.fetchall()
+        
+        tenders = []
+        if results:
+            columns = [desc[0] for desc in cursor.description]
+            for row in results:
+                tender_dict = _convert_oracle_row_to_dict(columns, row)
+                tenders.append(tender_dict)
+        
+        return tenders
+        
+    except Exception as e:
+        logger.error(f"Error retrieving open tenders: {str(e)}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def get_oracle_tender_by_id(tender_id):
+    """
+    Get a specific tender by ID from KRNR_TENDER table
+    
+    Args:
+        tender_id (int): Tender ID to retrieve
+        
+    Returns:
+        dict: Tender data if found, None otherwise
+    """
+    if not tender_id:
+        return None
+        
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        query = """
+        SELECT TENDER_ID,
+               TENDER_TITLE,
+               TENDER_DESCRIPTION,
+               CATEGORY_ID,
+               START_DATE,
+               END_DATE,
+               SUBMISSION_DEADLINE,
+               BUDGET_AMOUNT,
+               CURRENCY,
+               STATUS,
+               CREATED_BY_USER_ID,
+               CREATED_DATE
+          FROM KRNR_TENDER
+         WHERE TENDER_ID = :1
+        """
+        
+        cursor.execute(query, [tender_id])
+        result = cursor.fetchone()
+        
+        if result:
+            columns = [desc[0] for desc in cursor.description]
+            tender_dict = _convert_oracle_row_to_dict(columns, result)
+            return tender_dict
+        else:
+            return None
+        
+    except Exception as e:
+        logger.error(f"Error retrieving tender {tender_id}: {str(e)}")
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def get_oracle_open_tenders_count():
+    """
+    Get count of open tenders from KRNR_TENDER table
+    
+    Returns:
+        int: Number of open tenders
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        query = """
+        SELECT COUNT(*) as tender_count
+          FROM KRNR_TENDER
+         WHERE UPPER(STATUS) = 'OPEN'
+        """
+        
+        cursor.execute(query)
+        result = cursor.fetchone()
+        
+        return result[0] if result else 0
+        
+    except Exception as e:
+        logger.error(f"Error counting open tenders: {str(e)}")
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close() 

@@ -13,9 +13,10 @@ urlpatterns = [
     path('settings/upload-document/', views.upload_document, name='upload_document'),
     path('settings/delete-document/<int:document_id>/', views.delete_document, name='delete_document'),
     path('download-document/<int:document_id>/', views.download_document, name='download_document'),
-    # path('tender/<int:tender_id>/', views.tender_detail, name='tender_detail'),  # Commented out due to dependency
-    # path('tender/<int:tender_id>/apply/', views.apply_to_tender, name='apply_to_tender'),  # Commented out due to dependency
-    # path('my-applications/', views.my_applications, name='my_applications'),  # Commented out due to dependency
+    
+    # Tender Applications - Oracle based
+    path('tender-applications/', views.tender_applications, name='tender_applications'),
+    path('tender/<int:tender_id>/', views.tender_detail, name='tender_detail'),
     
     # New pages
     path('news-announcements/', views.news_announcements, name='news_announcements'),

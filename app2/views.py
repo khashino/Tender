@@ -13,7 +13,10 @@ from .auth_backend import App2AuthBackend, OracleUser
 from .oracle_utils import (
     execute_oracle_query, test_oracle_connection, get_oracle_tables, get_oracle_table_info, 
     create_oracle_user, create_vendor, update_user_vendor_id, get_vendor_by_id,
-    get_oracle_announcements, get_oracle_latest_news, get_oracle_announcement_count, get_oracle_news_count
+    get_oracle_announcements, get_oracle_latest_news, get_oracle_announcement_count, get_oracle_news_count,
+    get_oracle_user_messages, get_oracle_user_message_count,
+    get_oracle_notifications, get_oracle_notification_count,
+    get_oracle_open_tenders, get_oracle_tender_by_id, get_oracle_open_tenders_count
 )
 # from shared_models.models import Tender, TenderApplication  # Commented out to remove dependency
 from django.utils import timezone
@@ -391,8 +394,41 @@ def tender_create(request):
 
 @login_required
 def tender_detail(request, tender_id):
-    tender = get_object_or_404(Tender, id=tender_id)
-    return render(request, 'app2/tender/tender_detail.html', {'tender': tender})
+    """View for displaying detailed information about a specific tender"""
+    try:
+        # Get tender details from Oracle
+        tender = get_oracle_tender_by_id(tender_id)
+        
+        if not tender:
+            messages.error(request, 'مناقصه مورد نظر یافت نشد.')
+            return redirect('app2:tender_applications')
+        
+        # Format tender for template
+        formatted_tender = {
+            'id': tender.get('TENDER_ID'),
+            'title': tender.get('TENDER_TITLE'),
+            'description': tender.get('TENDER_DESCRIPTION'),
+            'category_id': tender.get('CATEGORY_ID'),
+            'start_date': tender.get('START_DATE'),
+            'end_date': tender.get('END_DATE'),
+            'submission_deadline': tender.get('SUBMISSION_DEADLINE'),
+            'budget_amount': tender.get('BUDGET_AMOUNT'),
+            'currency': tender.get('CURRENCY', 'ریال'),
+            'status': tender.get('STATUS'),
+            'created_date': tender.get('CREATED_DATE'),
+        }
+        
+        context = {
+            'tender': formatted_tender,
+            'page_title': f'جزئیات مناقصه: {formatted_tender["title"]}'
+        }
+        
+        return render(request, 'app2/tender_detail.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in tender_detail view: {str(e)}")
+        messages.error(request, 'خطا در بارگذاری جزئیات مناقصه')
+        return redirect('app2:tender_applications')
 
 @login_required
 def apply_to_tender(request, tender_id):
@@ -625,4 +661,56 @@ def clear_sessions_view(request):
     if hasattr(request, 'session'):
         request.session.flush()
     
-    return HttpResponse("All sessions cleared. <a href='/app2/login/'>Go to login</a>") 
+    return HttpResponse("All sessions cleared. <a href='/app2/login/'>Go to login</a>")
+
+def tender_applications(request):
+    """View for displaying open tender applications"""
+    try:
+        # Get user's group_id if they're an Oracle user
+        user_group_id = None
+        oracle_user = getattr(request.user, 'oracle_user', None)
+        if oracle_user and isinstance(oracle_user, dict):
+            user_group_id = oracle_user.get('GROUP_ID')
+        
+        # Get open tenders from Oracle
+        open_tenders = get_oracle_open_tenders(limit=50)
+        
+        # Format tenders for template
+        formatted_tenders = []
+        for tender in open_tenders:
+            formatted_tender = {
+                'id': tender.get('TENDER_ID'),
+                'title': tender.get('TENDER_TITLE'),
+                'description': tender.get('TENDER_DESCRIPTION'),
+                'category_id': tender.get('CATEGORY_ID'),
+                'start_date': tender.get('START_DATE'),
+                'end_date': tender.get('END_DATE'),
+                'submission_deadline': tender.get('SUBMISSION_DEADLINE'),
+                'budget_amount': tender.get('BUDGET_AMOUNT'),
+                'currency': tender.get('CURRENCY', 'ریال'),
+                'status': tender.get('STATUS'),
+                'created_date': tender.get('CREATED_DATE'),
+            }
+            formatted_tenders.append(formatted_tender)
+        
+        # Get count of open tenders
+        open_tenders_count = get_oracle_open_tenders_count()
+        
+        context = {
+            'tenders': formatted_tenders,
+            'total_count': open_tenders_count,
+            'page_title': 'مناقصات باز'
+        }
+        
+        return render(request, 'app2/tender_applications.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in tender_applications view: {str(e)}")
+        # Fallback to empty list if Oracle fails
+        context = {
+            'tenders': [],
+            'total_count': 0,
+            'page_title': 'مناقصات باز',
+            'error_message': 'خطا در بارگذاری اطلاعات مناقصات'
+        }
+        return render(request, 'app2/tender_applications.html', context) 

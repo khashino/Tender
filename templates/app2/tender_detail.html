@@ -1,0 +1,348 @@
+{% extends 'app2/base.html' %}
+{% load tender_filters %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'app2:home' %}">خانه</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'app2:tender_applications' %}">مناقصات</a></li>
+                    <li class="breadcrumb-item active">جزئیات مناقصه #{{ tender.id }}</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h2 class="mb-2">{{ tender.title }}</h2>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-success me-2">{{ tender.status }}</span>
+                        <span class="text-muted">شماره مناقصه: #{{ tender.id }}</span>
+                    </div>
+                </div>
+                <div>
+                    <a href="{% url 'app2:tender_applications' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        بازگشت به لیست
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Tender Description -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text me-2"></i>
+                        شرح مناقصه
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if tender.description %}
+                        <div class="tender-description">
+                            {{ tender.description|linebreaks }}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">توضیحات تکمیلی برای این مناقصه ارائه نشده است.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tender Timeline -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        برنامه زمانی
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% if tender.start_date %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">تاریخ شروع</h6>
+                                <p class="text-muted mb-0">{{ tender.start_date|date:"Y/m/d H:i" }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if tender.submission_deadline %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-warning"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">مهلت ارسال پیشنهاد</h6>
+                                <p class="text-danger mb-0">
+                                    <i class="bi bi-clock me-1"></i>
+                                    {{ tender.submission_deadline|date:"Y/m/d H:i" }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if tender.end_date %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">تاریخ پایان</h6>
+                                <p class="text-muted mb-0">{{ tender.end_date|date:"Y/m/d H:i" }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="mb-3">آیا مایل به شرکت در این مناقصه هستید؟</h5>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-success btn-lg" onclick="applyToTender({{ tender.id }})">
+                            <i class="bi bi-file-earmark-plus me-2"></i>
+                            ارسال درخواست شرکت
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-lg" onclick="downloadTenderDoc()">
+                            <i class="bi bi-download me-2"></i>
+                            دانلود اسناد
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Tender Info Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        اطلاعات کلی
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="info-item">
+                        <label>شماره مناقصه:</label>
+                        <span class="badge bg-primary">#{{ tender.id }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label>وضعیت:</label>
+                        <span class="badge bg-success">{{ tender.status }}</span>
+                    </div>
+                    
+                    {% if tender.budget_amount %}
+                    <div class="info-item">
+                        <label>بودجه تخمینی:</label>
+                        <span class="text-success fw-bold">
+                            <i class="bi bi-currency-exchange me-1"></i>
+                            {{ tender.budget_amount|floatformat:0 }} {{ tender.currency }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if tender.category_id %}
+                    <div class="info-item">
+                        <label>دسته‌بندی:</label>
+                        <span>{{ tender.category_id }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="info-item">
+                        <label>تاریخ ایجاد:</label>
+                        <span>{{ tender.created_date|date:"Y/m/d H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Dates Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-calendar-check me-2"></i>
+                        تاریخ‌های مهم
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if tender.start_date %}
+                    <div class="date-item">
+                        <div class="date-label">شروع:</div>
+                        <div class="date-value">{{ tender.start_date|date:"Y/m/d" }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if tender.submission_deadline %}
+                    <div class="date-item urgent">
+                        <div class="date-label">مهلت ارسال:</div>
+                        <div class="date-value text-danger">{{ tender.submission_deadline|date:"Y/m/d" }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if tender.end_date %}
+                    <div class="date-item">
+                        <div class="date-label">پایان:</div>
+                        <div class="date-value">{{ tender.end_date|date:"Y/m/d" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Contact Info Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-telephone me-2"></i>
+                        اطلاعات تماس
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">برای اطلاعات بیشتر با ما تماس بگیرید:</p>
+                    <div class="contact-item">
+                        <i class="bi bi-telephone me-2"></i>
+                        <span>021-1234567</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="bi bi-envelope me-2"></i>
+                        <span>info@tender.gov.ir</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="bi bi-clock me-2"></i>
+                        <span>شنبه تا چهارشنبه: 8 تا 16</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function applyToTender(tenderId) {
+    if (confirm('آیا مطمئن هستید که می‌خواهید در این مناقصه شرکت کنید؟')) {
+        alert('قابلیت درخواست شرکت در مناقصه به زودی اضافه خواهد شد.\nشماره مناقصه: ' + tenderId);
+    }
+}
+
+function downloadTenderDoc() {
+    alert('قابلیت دانلود اسناد مناقصه به زودی اضافه خواهد شد.');
+}
+</script>
+
+<style>
+.tender-description {
+    line-height: 1.8;
+    text-align: justify;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+.date-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.date-item:last-child {
+    border-bottom: none;
+}
+
+.date-item.urgent {
+    background-color: #fff3cd;
+    padding: 0.75rem;
+    margin: 0.25rem -1rem;
+    border-radius: 0.375rem;
+}
+
+.date-label {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.contact-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -1.75rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-content {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    border-left: 3px solid #0d6efd;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+}
+</style>
+{% endblock %} 
