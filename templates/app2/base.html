@@ -29,9 +29,15 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'tender_applications' %}active{% endif %}" href="{% url 'app2:tender_applications' %}">
-                                <i class="bi bi-file-text"></i>
-                                مناقصات باز
+                            <a class="nav-link {% if 'tender-applications' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'app2:tender_applications' %}">
+                                <i class="bi bi-search"></i>
+                                <span>تندرهای باز</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'my_applications' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'app2:my_applications' %}">
+                                <i class="bi bi-file-earmark-check"></i>
+                                <span>درخواست‌های من</span>
                             </a>
                         </li>
                         {% if user.is_authenticated %}

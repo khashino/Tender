@@ -16,7 +16,9 @@ from .oracle_utils import (
     get_oracle_announcements, get_oracle_latest_news, get_oracle_announcement_count, get_oracle_news_count,
     get_oracle_user_messages, get_oracle_user_message_count,
     get_oracle_notifications, get_oracle_notification_count,
-    get_oracle_open_tenders, get_oracle_tender_by_id, get_oracle_open_tenders_count
+    get_oracle_open_tenders, get_oracle_tender_by_id, get_oracle_open_tenders_count,
+    create_tender_application, get_vendor_tender_applications, check_tender_application_exists,
+    get_tender_application_by_id, update_tender_application_status
 )
 # from shared_models.models import Tender, TenderApplication  # Commented out to remove dependency
 from django.utils import timezone
@@ -403,6 +405,17 @@ def tender_detail(request, tender_id):
             messages.error(request, 'مناقصه مورد نظر یافت نشد.')
             return redirect('app2:tender_applications')
         
+        # Check if user has already applied (for Oracle users)
+        has_applied = False
+        user_vendor_id = None
+        
+        if isinstance(request.user, OracleUser):
+            user_company = getattr(request.user, 'company', None)
+            if user_company and hasattr(user_company, 'vendor_id'):
+                user_vendor_id = user_company.vendor_id
+                if user_vendor_id:
+                    has_applied = check_tender_application_exists(tender_id, user_vendor_id)
+        
         # Format tender for template
         formatted_tender = {
             'id': tender.get('TENDER_ID'),
@@ -420,7 +433,9 @@ def tender_detail(request, tender_id):
         
         context = {
             'tender': formatted_tender,
-            'page_title': f'جزئیات مناقصه: {formatted_tender["title"]}'
+            'page_title': f'جزئیات مناقصه: {formatted_tender["title"]}',
+            'has_applied': has_applied,
+            'user_vendor_id': user_vendor_id
         }
         
         return render(request, 'app2/tender_detail.html', context)
@@ -432,61 +447,145 @@ def tender_detail(request, tender_id):
 
 @login_required
 def apply_to_tender(request, tender_id):
-    tender = get_object_or_404(Tender, id=tender_id)
-    company = request.user.company
-    
-    # Check if tender is still open
-    if tender.status != 'published':
-        messages.error(request, 'This tender is no longer accepting applications.')
-        return redirect('app2:tender_list')
-    
-    # Check if company has already applied
-    if TenderApplication.objects.filter(tender=tender, applicant=company).exists():
-        messages.error(request, 'You have already applied to this tender.')
-        return redirect('app2:tender_list')
-    
-    if request.method == 'POST':
-        form = TenderApplicationForm(request.POST, request.FILES)
-        if form.is_valid():
-            application = form.save(commit=False)
-            application.tender = tender
-            application.applicant = company
-            application.save()
+    """View for submitting a tender application"""
+    try:
+        # Check if user is Oracle user and has vendor
+        if not isinstance(request.user, OracleUser):
+            messages.error(request, 'فقط کاربران ثبت‌شده می‌توانند در مناقصات شرکت کنند.')
+            return redirect('app2:tender_detail', tender_id=tender_id)
+        
+        user_company = getattr(request.user, 'company', None)
+        if not user_company or not hasattr(user_company, 'vendor_id') or not user_company.vendor_id:
+            messages.error(request, 'برای شرکت در مناقصه ابتدا باید اطلاعات شرکت خود را تکمیل کنید.')
+            return redirect('app2:settings')
+        
+        vendor_id = user_company.vendor_id
+        
+        # Get tender details
+        tender = get_oracle_tender_by_id(tender_id)
+        if not tender:
+            messages.error(request, 'مناقصه مورد نظر یافت نشد.')
+            return redirect('app2:tender_applications')
+        
+        # Check if tender is still open
+        if tender.get('STATUS', '').upper() != 'OPEN':
+            messages.error(request, 'این مناقصه دیگر باز نیست.')
+            return redirect('app2:tender_detail', tender_id=tender_id)
+        
+        # Check if already applied
+        if check_tender_application_exists(tender_id, vendor_id):
+            messages.warning(request, 'شما قبلاً برای این مناقصه درخواست ارسال کرده‌اید.')
+            return redirect('app2:tender_detail', tender_id=tender_id)
+        
+        if request.method == 'POST':
+            submission_notes = request.POST.get('submission_notes', '').strip()
             
-            # Note: TenderApplicationFlow from app1 has been removed
-            # Application submitted successfully without workflow integration
+            # Create the application
+            application = create_tender_application(tender_id, vendor_id, submission_notes)
             
-            messages.success(request, 'Your application has been submitted successfully!')
-            return redirect('app2:tender_list')
-    else:
-        form = TenderApplicationForm()
-    
-    context = {
-        'tender': tender,
-        'form': form,
-    }
-    return render(request, 'app2/tender/apply_to_tender.html', context)
+            if application:
+                messages.success(request, 'درخواست شما با موفقیت ارسال شد!')
+                return redirect('app2:my_applications')
+            else:
+                messages.error(request, 'خطا در ارسال درخواست. لطفاً دوباره تلاش کنید.')
+        
+        # Format tender for template
+        formatted_tender = {
+            'id': tender.get('TENDER_ID'),
+            'title': tender.get('TENDER_TITLE'),
+            'description': tender.get('TENDER_DESCRIPTION'),
+            'submission_deadline': tender.get('SUBMISSION_DEADLINE'),
+            'budget_amount': tender.get('BUDGET_AMOUNT'),
+            'currency': tender.get('CURRENCY', 'ریال'),
+        }
+        
+        context = {
+            'tender': formatted_tender,
+            'page_title': f'درخواست شرکت در مناقصه: {formatted_tender["title"]}'
+        }
+        
+        return render(request, 'app2/apply_to_tender.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in apply_to_tender view: {str(e)}")
+        messages.error(request, 'خطا در پردازش درخواست')
+        return redirect('app2:tender_detail', tender_id=tender_id)
 
 @login_required
 def my_applications(request):
-    """View for 'پیشنهادات من' (My Proposals) to show user's tender applications and their status."""
-    # Get the company associated with the current user
+    """View for displaying user's tender applications"""
     try:
-        company = request.user.company
-        # Get all applications submitted by this company
-        applications = TenderApplication.objects.filter(applicant=company).order_by('-submitted_at')
+        # Check if user is Oracle user and has vendor
+        if not isinstance(request.user, OracleUser):
+            messages.error(request, 'شما دسترسی به این بخش ندارید.')
+            return redirect('app2:home')
         
-        # Note: TenderApplicationProcess from app1 has been removed
-        # Applications will show without process information
+        user_company = getattr(request.user, 'company', None)
+        if not user_company or not hasattr(user_company, 'vendor_id') or not user_company.vendor_id:
+            messages.info(request, 'برای مشاهده درخواست‌ها ابتدا باید اطلاعات شرکت خود را تکمیل کنید.')
+            return redirect('app2:settings')
+        
+        vendor_id = user_company.vendor_id
+        
+        # Get vendor's applications
+        applications = get_vendor_tender_applications(vendor_id, limit=50)
+        
+        # Format applications for template
+        formatted_applications = []
+        for app in applications:
+            formatted_app = {
+                'id': app.get('APPLICATION_ID'),
+                'tender_id': app.get('TENDER_ID'),
+                'tender_title': app.get('TENDER_TITLE'),
+                'tender_description': app.get('TENDER_DESCRIPTION'),
+                'submission_date': app.get('SUBMISSION_DATE'),
+                'application_status': app.get('APPLICATION_STATUS'),
+                'submission_notes': app.get('SUBMISSION_NOTES'),
+                'budget_amount': app.get('BUDGET_AMOUNT'),
+                'currency': app.get('CURRENCY', 'ریال'),
+                'tender_status': app.get('TENDER_STATUS'),
+                'submission_deadline': app.get('SUBMISSION_DEADLINE'),
+            }
+            formatted_applications.append(formatted_app)
+        
+        context = {
+            'applications': formatted_applications,
+            'total_count': len(formatted_applications),
+            'page_title': 'درخواست‌های من'
+        }
+        
+        return render(request, 'app2/my_applications.html', context)
         
     except Exception as e:
-        messages.error(request, f'Error retrieving your applications: {str(e)}')
-        applications = []
-    
-    context = {
-        'applications': applications,
-    }
-    return render(request, 'app2/tender/my_applications.html', context)
+        logger.error(f"Error in my_applications view: {str(e)}")
+        messages.error(request, 'خطا در بارگذاری درخواست‌ها')
+        return redirect('app2:home')
+
+@login_required
+def application_detail(request, application_id):
+    """Display detailed information about a specific application"""
+    try:
+        # Get application details from Oracle
+        application = get_tender_application_by_id(application_id)
+        
+        if not application:
+            messages.error(request, 'درخواست مورد نظر یافت نشد.')
+            return redirect('app2:my_applications')
+        
+        # Check if this application belongs to the current user
+        # (This would need proper vendor/user relationship checking)
+        
+        context = {
+            'page_title': f'جزئیات درخواست #{application_id}',
+            'application': application,
+        }
+        
+        return render(request, 'app2/application_detail.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error retrieving application details: {str(e)}")
+        messages.error(request, 'خطا در بارگذاری جزئیات درخواست.')
+        return redirect('app2:my_applications')
 
 def news_announcements(request):
     # Check if user is Oracle user to get appropriate group_id

@@ -1,0 +1,321 @@
+{% extends 'app2/base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'app2:home' %}">
+                    <i class="bi bi-house-door"></i>
+                    داشبورد
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'app2:my_applications' %}">درخواست‌های من</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                جزئیات درخواست #{{ application.id }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="bi bi-file-earmark-check me-2"></i>
+                        جزئیات درخواست #{{ application.id }}
+                    </h2>
+                    <p class="text-muted mb-0">مشاهده جزئیات کامل درخواست ارسالی</p>
+                </div>
+                <div>
+                    <a href="{% url 'app2:my_applications' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        بازگشت به لیست
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Application Details -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        اطلاعات درخواست
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">شماره درخواست</h6>
+                            <p class="fw-bold">#{{ application.id }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">تاریخ ارسال</h6>
+                            <p>{{ application.submission_date|date:"Y/m/d H:i" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">وضعیت درخواست</h6>
+                            <p>
+                                {% if application.application_status == 'Submitted' %}
+                                    <span class="badge bg-info">ارسال شده</span>
+                                {% elif application.application_status == 'Under Review' %}
+                                    <span class="badge bg-warning">در حال بررسی</span>
+                                {% elif application.application_status == 'Approved' %}
+                                    <span class="badge bg-success">تایید شده</span>
+                                {% elif application.application_status == 'Rejected' %}
+                                    <span class="badge bg-danger">رد شده</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ application.application_status }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">عنوان مناقصه</h6>
+                            <p class="fw-bold">{{ application.tender_title }}</p>
+                        </div>
+                    </div>
+
+                    {% if application.notes %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-muted">یادداشت‌های ارسالی</h6>
+                            <div class="bg-light p-3 rounded">
+                                <p class="mb-0">{{ application.notes|linebreaks }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tender Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text me-2"></i>
+                        اطلاعات مناقصه
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ application.tender_title }}</h6>
+                            <p class="text-muted mb-0">مشاهده جزئیات کامل مناقصه</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'app2:tender_detail' application.tender_id %}" 
+                               class="btn btn-primary">
+                                <i class="bi bi-eye me-1"></i>
+                                مشاهده مناقصه
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Timeline -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        تاریخچه وضعیت
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item active">
+                            <div class="timeline-marker bg-success">
+                                <i class="bi bi-check"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">درخواست ارسال شد</h6>
+                                <p class="text-muted mb-0">{{ application.submission_date|date:"Y/m/d H:i" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if application.application_status == 'Under Review' or application.application_status == 'Approved' or application.application_status == 'Rejected' %}
+                        <div class="timeline-item active">
+                            <div class="timeline-marker bg-warning">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">بررسی شروع شد</h6>
+                                <p class="text-muted mb-0">در حال بررسی</p>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-secondary">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">در انتظار بررسی</h6>
+                                <p class="text-muted mb-0">هنوز شروع نشده</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if application.application_status == 'Approved' %}
+                        <div class="timeline-item active">
+                            <div class="timeline-marker bg-success">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">درخواست تایید شد</h6>
+                                <p class="text-muted mb-0">تبریک!</p>
+                            </div>
+                        </div>
+                        {% elif application.application_status == 'Rejected' %}
+                        <div class="timeline-item active">
+                            <div class="timeline-marker bg-danger">
+                                <i class="bi bi-x-circle"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">درخواست رد شد</h6>
+                                <p class="text-muted mb-0">متاسفانه پذیرفته نشد</p>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-secondary">
+                                <i class="bi bi-question-circle"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">تصمیم نهایی</h6>
+                                <p class="text-muted mb-0">در انتظار نتیجه</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        عملیات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if application.application_status == 'Submitted' %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        درخواست شما با موفقیت ارسال شده و در حال بررسی است.
+                    </div>
+                    {% elif application.application_status == 'Under Review' %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-clock me-2"></i>
+                        درخواست شما در حال بررسی است. لطفاً صبر کنید.
+                    </div>
+                    {% elif application.application_status == 'Approved' %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        تبریک! درخواست شما تایید شده است.
+                    </div>
+                    {% elif application.application_status == 'Rejected' %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle me-2"></i>
+                        متاسفانه درخواست شما پذیرفته نشده است.
+                    </div>
+                    {% endif %}
+
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                            <i class="bi bi-printer me-1"></i>
+                            چاپ درخواست
+                        </button>
+                        <a href="{% url 'app2:tender_detail' application.tender_id %}" 
+                           class="btn btn-outline-info">
+                            <i class="bi bi-file-text me-1"></i>
+                            مشاهده مناقصه
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -1.5rem;
+    top: 2rem;
+    width: 2px;
+    height: calc(100% - 1rem);
+    background-color: #dee2e6;
+}
+
+.timeline-item.active:not(:last-child)::before {
+    background-color: #198754;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -2rem;
+    top: 0.25rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px #dee2e6;
+}
+
+.timeline-item.active .timeline-marker {
+    box-shadow: 0 0 0 3px currentColor;
+}
+
+.timeline-content h6 {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.timeline-content p {
+    font-size: 0.875rem;
+}
+
+@media print {
+    .btn, .card-header, nav {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+{% endblock %} 

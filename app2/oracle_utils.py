@@ -1355,4 +1355,285 @@ def get_oracle_open_tenders_count():
         if cursor:
             cursor.close()
         if connection:
+            connection.close()
+
+def create_tender_application(tender_id, vendor_id, submission_notes=None):
+    """
+    Create a new tender application in KRNR_TENDER_APPLICATION table
+    
+    Args:
+        tender_id (int): ID of the tender to apply for
+        vendor_id (int): ID of the vendor/company applying
+        submission_notes (str): Optional notes/comments for the application
+        
+    Returns:
+        dict: Created application data if successful, None otherwise
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        # Check if application already exists
+        check_query = """
+        SELECT COUNT(*) as count
+          FROM KRNR_TENDER_APPLICATION
+         WHERE TENDER_ID = :1 AND VENDOR_ID = :2
+        """
+        
+        cursor.execute(check_query, [tender_id, vendor_id])
+        result = cursor.fetchone()
+        
+        if result and result[0] > 0:
+            # Application already exists
+            logger.warning(f"Tender application already exists for tender_id={tender_id}, vendor_id={vendor_id}")
+            return None
+        
+        # Create new application
+        insert_query = """
+        INSERT INTO KRNR_TENDER_APPLICATION 
+        (TENDER_ID, VENDOR_ID, SUBMISSION_NOTES)
+        VALUES (:1, :2, :3)
+        RETURNING APPLICATION_ID INTO :4
+        """
+        
+        # Create output variable for RETURNING clause
+        application_id_var = cursor.var(int)
+        
+        cursor.execute(insert_query, [
+            tender_id,
+            vendor_id,
+            submission_notes,
+            application_id_var
+        ])
+        connection.commit()
+        
+        # Get the generated APPLICATION_ID
+        generated_id = application_id_var.getvalue()[0]
+        
+        result = {
+            'APPLICATION_ID': generated_id,
+            'TENDER_ID': tender_id,
+            'VENDOR_ID': vendor_id,
+            'SUBMISSION_NOTES': submission_notes,
+            'APPLICATION_STATUS': 'Submitted'
+        }
+        
+        logger.info(f"Tender application created successfully with ID {generated_id}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error creating tender application: {str(e)}")
+        if connection:
+            connection.rollback()
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def get_vendor_tender_applications(vendor_id, limit=20):
+    """
+    Get tender applications for a specific vendor from KRNR_TENDER_APPLICATION table
+    
+    Args:
+        vendor_id (int): Vendor ID to get applications for
+        limit (int): Maximum number of applications to return
+        
+    Returns:
+        list: List of application dictionaries with tender details
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        query = """
+        SELECT ta.APPLICATION_ID,
+               ta.TENDER_ID,
+               ta.VENDOR_ID,
+               ta.SUBMISSION_DATE,
+               ta.APPLICATION_STATUS,
+               ta.SUBMISSION_NOTES,
+               t.TENDER_TITLE,
+               t.TENDER_DESCRIPTION,
+               t.START_DATE,
+               t.END_DATE,
+               t.SUBMISSION_DEADLINE,
+               t.BUDGET_AMOUNT,
+               t.CURRENCY,
+               t.STATUS as TENDER_STATUS
+          FROM KRNR_TENDER_APPLICATION ta
+          JOIN KRNR_TENDER t ON ta.TENDER_ID = t.TENDER_ID
+         WHERE ta.VENDOR_ID = :1
+         ORDER BY ta.SUBMISSION_DATE DESC
+         FETCH FIRST :2 ROWS ONLY
+        """
+        
+        cursor.execute(query, [vendor_id, limit])
+        results = cursor.fetchall()
+        
+        applications = []
+        if results:
+            columns = [desc[0] for desc in cursor.description]
+            for row in results:
+                application_dict = _convert_oracle_row_to_dict(columns, row)
+                applications.append(application_dict)
+        
+        return applications
+        
+    except Exception as e:
+        logger.error(f"Error retrieving applications for vendor {vendor_id}: {str(e)}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def check_tender_application_exists(tender_id, vendor_id):
+    """
+    Check if a tender application already exists for a specific tender and vendor
+    
+    Args:
+        tender_id (int): Tender ID
+        vendor_id (int): Vendor ID
+        
+    Returns:
+        bool: True if application exists, False otherwise
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        query = """
+        SELECT COUNT(*) as count
+          FROM KRNR_TENDER_APPLICATION
+         WHERE TENDER_ID = :1 AND VENDOR_ID = :2
+        """
+        
+        cursor.execute(query, [tender_id, vendor_id])
+        result = cursor.fetchone()
+        
+        return result and result[0] > 0
+        
+    except Exception as e:
+        logger.error(f"Error checking tender application existence: {str(e)}")
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def update_tender_application_status(application_id, new_status, notes=None):
+    """
+    Update the status of a tender application
+    
+    Args:
+        application_id (int): Application ID to update
+        new_status (str): New application status
+        notes (str): Optional additional notes
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        if notes:
+            update_query = """
+            UPDATE KRNR_TENDER_APPLICATION 
+            SET APPLICATION_STATUS = :1,
+                SUBMISSION_NOTES = :2
+            WHERE APPLICATION_ID = :3
+            """
+            cursor.execute(update_query, [new_status, notes, application_id])
+        else:
+            update_query = """
+            UPDATE KRNR_TENDER_APPLICATION 
+            SET APPLICATION_STATUS = :1
+            WHERE APPLICATION_ID = :2
+            """
+            cursor.execute(update_query, [new_status, application_id])
+        
+        connection.commit()
+        
+        logger.info(f"Updated application {application_id} status to {new_status}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error updating application status: {str(e)}")
+        if connection:
+            connection.rollback()
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def get_tender_application_by_id(application_id):
+    """
+    Get a specific tender application by ID
+    
+    Args:
+        application_id (int): Application ID
+        
+    Returns:
+        dict: Application data if found, None otherwise
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        query = """
+        SELECT ta.APPLICATION_ID,
+               ta.TENDER_ID,
+               ta.VENDOR_ID,
+               ta.SUBMISSION_DATE,
+               ta.APPLICATION_STATUS,
+               ta.SUBMISSION_NOTES,
+               t.TENDER_TITLE,
+               t.TENDER_DESCRIPTION,
+               t.START_DATE,
+               t.END_DATE,
+               t.SUBMISSION_DEADLINE,
+               t.BUDGET_AMOUNT,
+               t.CURRENCY,
+               t.STATUS as TENDER_STATUS,
+               v.VENDOR_NAME
+          FROM KRNR_TENDER_APPLICATION ta
+          JOIN KRNR_TENDER t ON ta.TENDER_ID = t.TENDER_ID
+          JOIN KRNR_VENDOR v ON ta.VENDOR_ID = v.VENDOR_ID
+         WHERE ta.APPLICATION_ID = :1
+        """
+        
+        cursor.execute(query, [application_id])
+        result = cursor.fetchone()
+        
+        if result:
+            columns = [desc[0] for desc in cursor.description]
+            application_dict = _convert_oracle_row_to_dict(columns, result)
+            return application_dict
+        else:
+            return None
+        
+    except Exception as e:
+        logger.error(f"Error retrieving application {application_id}: {str(e)}")
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
             connection.close() 
