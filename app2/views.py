@@ -10,7 +10,11 @@ import os
 from .models import App2User, Company, CompanyDocument, Announcement, LatestNews, Notification, Message
 from .forms import App2UserCreationForm, App2AuthenticationForm, CompanyForm, CompanyDocumentForm, OracleUserRegistrationForm, OracleVendorForm
 from .auth_backend import App2AuthBackend, OracleUser
-from .oracle_utils import execute_oracle_query, test_oracle_connection, get_oracle_tables, get_oracle_table_info, create_oracle_user, create_vendor, update_user_vendor_id, get_vendor_by_id
+from .oracle_utils import (
+    execute_oracle_query, test_oracle_connection, get_oracle_tables, get_oracle_table_info, 
+    create_oracle_user, create_vendor, update_user_vendor_id, get_vendor_by_id,
+    get_oracle_announcements, get_oracle_latest_news, get_oracle_announcement_count, get_oracle_news_count
+)
 # from shared_models.models import Tender, TenderApplication  # Commented out to remove dependency
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
@@ -20,9 +24,49 @@ def home(request):
     #if not request.user.is_authenticated:
     #    return redirect('app2:login')
     
-    # Get the latest announcements, news and tenders
-    announcements = Announcement.objects.filter(is_active=True).order_by('-created_at')[:5]
-    latest_news = LatestNews.objects.filter(is_active=True).order_by('-created_at')[:5]
+    # Check if user is Oracle user to get appropriate group_id
+    user_group_id = None
+    if request.user.is_authenticated and isinstance(request.user, OracleUser):
+        user_group_id = getattr(request.user, 'group_id', None)
+    
+    # Get the latest announcements and news from Oracle database
+    try:
+        oracle_announcements = get_oracle_announcements(group_id=user_group_id, limit=5)
+        oracle_latest_news = get_oracle_latest_news(group_id=user_group_id, limit=5)
+        
+        # Convert Oracle data to template-friendly format (similar to Django models)
+        announcements = []
+        for ann in oracle_announcements:
+            announcements.append({
+                'id': ann.get('ANNOUNCEMENT_ID'),
+                'title': ann.get('TITLE'),
+                'content': ann.get('CONTENT'),
+                'created_at': ann.get('CREATED_AT'),
+                'updated_at': ann.get('UPDATED_AT'),
+                'is_active': ann.get('IS_ACTIVE'),
+            })
+        
+        latest_news = []
+        for news in oracle_latest_news:
+            latest_news.append({
+                'id': news.get('NEWS_ID'),
+                'title': news.get('TITLE'),
+                'content': news.get('CONTENT'),
+                'image': {'url': news.get('IMAGE_URL')} if news.get('IMAGE_URL') else None,
+                'created_at': news.get('CREATED_AT'),
+                'updated_at': news.get('UPDATED_AT'),
+                'is_active': news.get('IS_ACTIVE'),
+            })
+            
+    except Exception as e:
+        # Fallback to empty lists if Oracle query fails
+        print(f"Error retrieving Oracle data: {str(e)}")
+        announcements = []
+        latest_news = []
+        # Optional: Add error message
+        if request.user.is_authenticated:
+            messages.warning(request, 'خطا در بارگذاری اطلاعات. لطفاً دوباره تلاش کنید.')
+    
     # latest_tenders = Tender.objects.all().order_by('-published_date')[:5]  # Commented out due to dependency
     
     context = {
@@ -409,8 +453,48 @@ def my_applications(request):
     return render(request, 'app2/tender/my_applications.html', context)
 
 def news_announcements(request):
-    announcements = Announcement.objects.filter(is_active=True).order_by('-created_at')
-    latest_news = LatestNews.objects.filter(is_active=True).order_by('-created_at')
+    # Check if user is Oracle user to get appropriate group_id
+    user_group_id = None
+    if request.user.is_authenticated and isinstance(request.user, OracleUser):
+        user_group_id = getattr(request.user, 'group_id', None)
+    
+    # Get all announcements and news from Oracle database
+    try:
+        oracle_announcements = get_oracle_announcements(group_id=user_group_id, limit=50)  # Get more for full page
+        oracle_latest_news = get_oracle_latest_news(group_id=user_group_id, limit=50)
+        
+        # Convert Oracle data to template-friendly format (similar to Django models)
+        announcements = []
+        for ann in oracle_announcements:
+            announcements.append({
+                'id': ann.get('ANNOUNCEMENT_ID'),
+                'title': ann.get('TITLE'),
+                'content': ann.get('CONTENT'),
+                'created_at': ann.get('CREATED_AT'),
+                'updated_at': ann.get('UPDATED_AT'),
+                'is_active': ann.get('IS_ACTIVE'),
+            })
+        
+        latest_news = []
+        for news in oracle_latest_news:
+            latest_news.append({
+                'id': news.get('NEWS_ID'),
+                'title': news.get('TITLE'),
+                'content': news.get('CONTENT'),
+                'image': {'url': news.get('IMAGE_URL')} if news.get('IMAGE_URL') else None,
+                'created_at': news.get('CREATED_AT'),
+                'updated_at': news.get('UPDATED_AT'),
+                'is_active': news.get('IS_ACTIVE'),
+            })
+            
+    except Exception as e:
+        # Fallback to empty lists if Oracle query fails
+        print(f"Error retrieving Oracle data for news_announcements: {str(e)}")
+        announcements = []
+        latest_news = []
+        # Optional: Add error message
+        if request.user.is_authenticated:
+            messages.warning(request, 'خطا در بارگذاری اطلاعات. لطفاً دوباره تلاش کنید.')
     
     context = {
         'announcements': announcements,

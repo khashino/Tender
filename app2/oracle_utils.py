@@ -828,4 +828,361 @@ def create_oracle_message(user_id, message_text, message_type=None):
         if cursor:
             cursor.close()
         if connection:
+            connection.close()
+
+def get_oracle_announcements(group_id=None, limit=5):
+    """
+    Get announcements from KRN_ANNOUNCEMENTS table
+    
+    Args:
+        group_id (int): Optional group ID to filter announcements
+        limit (int): Maximum number of announcements to return
+        
+    Returns:
+        list: List of announcement dictionaries
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        if group_id:
+            query = """
+            SELECT ANNOUNCEMENT_ID,
+                   TITLE,
+                   CONTENT,
+                   CREATED_AT,
+                   UPDATED_AT,
+                   IS_ACTIVE,
+                   GROUP_ID
+              FROM KRN_ANNOUNCEMENTS
+             WHERE IS_ACTIVE = 1
+               AND (GROUP_ID = :1 OR GROUP_ID IS NULL)
+             ORDER BY CREATED_AT DESC
+             FETCH FIRST :2 ROWS ONLY
+            """
+            cursor.execute(query, [group_id, limit])
+        else:
+            # Get all announcements if no group specified
+            query = """
+            SELECT ANNOUNCEMENT_ID,
+                   TITLE,
+                   CONTENT,
+                   CREATED_AT,
+                   UPDATED_AT,
+                   IS_ACTIVE,
+                   GROUP_ID
+              FROM KRN_ANNOUNCEMENTS
+             WHERE IS_ACTIVE = 1
+             ORDER BY CREATED_AT DESC
+             FETCH FIRST :1 ROWS ONLY
+            """
+            cursor.execute(query, [limit])
+        
+        results = cursor.fetchall()
+        
+        announcements = []
+        if results:
+            columns = [desc[0] for desc in cursor.description]
+            for row in results:
+                announcement_dict = dict(zip(columns, row))
+                announcements.append(announcement_dict)
+        
+        return announcements
+        
+    except Exception as e:
+        logger.error(f"Error retrieving announcements: {str(e)}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def get_oracle_latest_news(group_id=None, limit=5):
+    """
+    Get latest news from KRN_LATEST_NEWS table
+    
+    Args:
+        group_id (int): Optional group ID to filter news
+        limit (int): Maximum number of news items to return
+        
+    Returns:
+        list: List of news dictionaries
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        if group_id:
+            query = """
+            SELECT NEWS_ID,
+                   TITLE,
+                   CONTENT,
+                   IMAGE_URL,
+                   CREATED_AT,
+                   UPDATED_AT,
+                   IS_ACTIVE,
+                   GROUP_ID
+              FROM KRN_LATEST_NEWS
+             WHERE IS_ACTIVE = 1
+               AND (GROUP_ID = :1 OR GROUP_ID IS NULL)
+             ORDER BY CREATED_AT DESC
+             FETCH FIRST :2 ROWS ONLY
+            """
+            cursor.execute(query, [group_id, limit])
+        else:
+            # Get all news if no group specified
+            query = """
+            SELECT NEWS_ID,
+                   TITLE,
+                   CONTENT,
+                   IMAGE_URL,
+                   CREATED_AT,
+                   UPDATED_AT,
+                   IS_ACTIVE,
+                   GROUP_ID
+              FROM KRN_LATEST_NEWS
+             WHERE IS_ACTIVE = 1
+             ORDER BY CREATED_AT DESC
+             FETCH FIRST :1 ROWS ONLY
+            """
+            cursor.execute(query, [limit])
+        
+        results = cursor.fetchall()
+        
+        news_list = []
+        if results:
+            columns = [desc[0] for desc in cursor.description]
+            for row in results:
+                news_dict = dict(zip(columns, row))
+                news_list.append(news_dict)
+        
+        return news_list
+        
+    except Exception as e:
+        logger.error(f"Error retrieving latest news: {str(e)}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def get_oracle_announcement_count(group_id=None):
+    """
+    Get count of active announcements from KRN_ANNOUNCEMENTS table
+    
+    Args:
+        group_id (int): Optional group ID to filter announcements
+        
+    Returns:
+        int: Number of active announcements
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        if group_id:
+            query = """
+            SELECT COUNT(*) as announcement_count
+              FROM KRN_ANNOUNCEMENTS
+             WHERE IS_ACTIVE = 1
+               AND (GROUP_ID = :1 OR GROUP_ID IS NULL)
+            """
+            cursor.execute(query, [group_id])
+        else:
+            query = """
+            SELECT COUNT(*) as announcement_count
+              FROM KRN_ANNOUNCEMENTS
+             WHERE IS_ACTIVE = 1
+            """
+            cursor.execute(query)
+        
+        result = cursor.fetchone()
+        
+        return result[0] if result else 0
+        
+    except Exception as e:
+        logger.error(f"Error counting announcements: {str(e)}")
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def get_oracle_news_count(group_id=None):
+    """
+    Get count of active news from KRN_LATEST_NEWS table
+    
+    Args:
+        group_id (int): Optional group ID to filter news
+        
+    Returns:
+        int: Number of active news items
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        if group_id:
+            query = """
+            SELECT COUNT(*) as news_count
+              FROM KRN_LATEST_NEWS
+             WHERE IS_ACTIVE = 1
+               AND (GROUP_ID = :1 OR GROUP_ID IS NULL)
+            """
+            cursor.execute(query, [group_id])
+        else:
+            query = """
+            SELECT COUNT(*) as news_count
+              FROM KRN_LATEST_NEWS
+             WHERE IS_ACTIVE = 1
+            """
+            cursor.execute(query)
+        
+        result = cursor.fetchone()
+        
+        return result[0] if result else 0
+        
+    except Exception as e:
+        logger.error(f"Error counting news: {str(e)}")
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def create_oracle_announcement(title, content, group_id=None):
+    """
+    Create a new announcement in KRN_ANNOUNCEMENTS table
+    
+    Args:
+        title (str): Announcement title
+        content (str): Announcement content
+        group_id (int): Optional group ID to restrict access
+        
+    Returns:
+        dict: Created announcement data if successful, None otherwise
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        insert_query = """
+        INSERT INTO KRN_ANNOUNCEMENTS 
+        (TITLE, CONTENT, GROUP_ID)
+        VALUES (:1, :2, :3)
+        RETURNING ANNOUNCEMENT_ID INTO :4
+        """
+        
+        # Create output variable for RETURNING clause
+        announcement_id_var = cursor.var(int)
+        
+        cursor.execute(insert_query, [
+            title,
+            content,
+            group_id,
+            announcement_id_var
+        ])
+        connection.commit()
+        
+        # Get the generated ANNOUNCEMENT_ID
+        generated_id = announcement_id_var.getvalue()[0]
+        
+        result = {
+            'ANNOUNCEMENT_ID': generated_id,
+            'TITLE': title,
+            'CONTENT': content,
+            'GROUP_ID': group_id,
+            'IS_ACTIVE': 1
+        }
+        
+        logger.info(f"Announcement created successfully with ID {generated_id}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error creating announcement: {str(e)}")
+        if connection:
+            connection.rollback()
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def create_oracle_news(title, content, image_url=None, group_id=None):
+    """
+    Create a new news item in KRN_LATEST_NEWS table
+    
+    Args:
+        title (str): News title
+        content (str): News content
+        image_url (str): Optional image URL/path
+        group_id (int): Optional group ID to restrict access
+        
+    Returns:
+        dict: Created news data if successful, None otherwise
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_oracle_connection()
+        cursor = connection.cursor()
+        
+        insert_query = """
+        INSERT INTO KRN_LATEST_NEWS 
+        (TITLE, CONTENT, IMAGE_URL, GROUP_ID)
+        VALUES (:1, :2, :3, :4)
+        RETURNING NEWS_ID INTO :5
+        """
+        
+        # Create output variable for RETURNING clause
+        news_id_var = cursor.var(int)
+        
+        cursor.execute(insert_query, [
+            title,
+            content,
+            image_url,
+            group_id,
+            news_id_var
+        ])
+        connection.commit()
+        
+        # Get the generated NEWS_ID
+        generated_id = news_id_var.getvalue()[0]
+        
+        result = {
+            'NEWS_ID': generated_id,
+            'TITLE': title,
+            'CONTENT': content,
+            'IMAGE_URL': image_url,
+            'GROUP_ID': group_id,
+            'IS_ACTIVE': 1
+        }
+        
+        logger.info(f"News created successfully with ID {generated_id}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error creating news: {str(e)}")
+        if connection:
+            connection.rollback()
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
             connection.close() 
